@@ -1,5 +1,0 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {compare,normalizedRate} from '../js/calculator.js';
-test('normalizes different weight units before choosing a winner',()=>{const r=compare([{name:'Ounces',price:4,quantity:8,unit:'oz'},{name:'Grams',price:5,quantity:500,unit:'g'}]);assert.equal(r.values[1].cheapest,true);assert.ok(normalizedRate(r.values[0])>normalizedRate(r.values[1]))});
-test('does not make a misleading cross-category recommendation',()=>{const r=compare([{name:'Milk',price:4,quantity:1,unit:'L'},{name:'Apples',price:4,quantity:4,unit:'count'}]);assert.match(r.error,/like with like/)});
-test('supports one or two filled product cards and rejects an empty comparison',()=>{assert.equal(compare([{name:'A',price:2,quantity:4,unit:'oz'}]).values.length,1);assert.match(compare([]).error,/at least one/)});
-test('reports the winner’s saving against the next best deal',()=>{const r=compare([{name:'A',price:4,quantity:8,unit:'oz'},{name:'B',price:5,quantity:8,unit:'oz'}]);assert.equal(r.values[0].saving,r.values[1].normalized-r.values[0].normalized);assert.equal(r.values[1].saving,0)});

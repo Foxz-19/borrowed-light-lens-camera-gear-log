@@ -1,1 +1,6 @@
-{"name":"unitwise","private":true,"type":"module","scripts":{"test":"node --test"}}
+{
+  "name": "sunburn-summits-logbook",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test", "check": "node --check src/data.js && node --check src/storage.js && node --check src/render.js && node --check src/main.js && npm test"}
+}

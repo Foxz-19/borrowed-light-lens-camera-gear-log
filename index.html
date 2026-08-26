@@ -1,23 +1,52 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="theme-color" content="#12362c"><title>Unitwise — Grocery price comparator</title><link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./enhancements.css"></head>
-<body>
-  <a class="skip-link" href="#main-content">Skip to comparator</a>
-  <main class="shell" id="main-content">
-    <header class="intro"><p class="eyebrow">Grocery math, made clear</p><h1>Unitwise</h1><p>Compare shelf prices by the unit. Add up to three products and find the real deal.</p></header>
-    <form id="comparator" novalidate>
-      <div class="form-heading"><div><p class="eyebrow">1 · Add shelf labels</p><h2>What’s on the shelf?</h2></div><p>Fill one, two, or three cards. We convert grams, kilograms, ounces, and pounds automatically.</p><button class="example" id="try-example" type="button">Try cereal example</button></div>
-      <div class="product-grid" id="products" aria-label="Products to compare"></div>
-      <p id="form-error" class="form-error" role="alert" hidden></p>
-      <div class="actions"><button class="compare" type="submit">Compare prices <span aria-hidden="true">→</span></button><button class="reset" type="button" id="reset">Reset</button></div>
-    </form>
-    <section class="results" aria-labelledby="results-heading" aria-live="polite" aria-atomic="true" id="results" hidden>
-      <div><p class="eyebrow">The verdict</p><h2 id="results-heading">Best value</h2></div><p id="result-summary"></p>
-    </section>
-    <details class="unit-guide"><summary>How the comparison works</summary><p>Weight packages are compared per gram and liquid packages per mL, even when shelf labels use different units. Count items only compare with other count items.</p></details>
-  </main>
-  <dialog id="confirm-reset" aria-labelledby="reset-title"><h2 id="reset-title">Start over?</h2><p>This clears the three product entries and comparison.</p><div class="dialog-actions"><button type="button" id="cancel-reset">Keep editing</button><button type="button" id="confirm-reset-button" class="danger">Clear all</button></div></dialog>
-  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-  <template id="product-template"><article class="product" data-index=""><div class="product-top"><span class="number"></span><label class="product-name-label">Product <input class="name" type="text" maxlength="40" placeholder="e.g. Honey Oats" autocomplete="off"></label></div><div class="measurements"><label>Price <span class="currency">$</span><input class="price" inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0.00" aria-label="Price in dollars"></label><label>Quantity <input class="quantity" inputmode="decimal" type="number" min="0.001" step="any" placeholder="0"></label><label>Unit <select class="unit" aria-label="Unit"><option value="oz">oz</option><option value="g">g</option><option value="kg">kg</option><option value="lb">lb</option><option value="L">L</option><option value="mL">mL</option><option value="count">count</option></select></label></div><p class="unit-result" hidden></p></article></template>
-  <script type="module" src="./js/app.js"></script>
-</body></html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#173e4a" />
+    <title>Sunburn & Summits · Souvenir logbook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#collection">Skip to collection</a>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Sunburn and Summits home"><span class="brand-mark">✦</span><span>Sunburn <i>&</i> Summits</span></a>
+      <p class="topbar-note">A record of little things that made the journey</p>
+      <a class="jump-link" href="#collection">View collection <span>↓</span></a>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div class="intro-copy">
+          <p class="eyebrow">TRAVEL SOUVENIR LOGBOOK</p>
+          <h1 id="page-title">Keep the <em>feeling</em><br />of the journey.</h1>
+          <p class="lede">Catalog the physical treasures that came home with you, and the stories they carry.</p>
+          <a class="primary-button" href="#add">＋ Add a souvenir</a>
+        </div>
+        <div class="sun-stamp" aria-hidden="true"><span>COLLECT<br />MEMORIES</span><strong>☼</strong><small>ONE OBJECT<br />AT A TIME</small></div>
+      </section>
+      <section class="summary" aria-label="Collection summary">
+        <div><span class="summary-number" id="total-count">0</span><span>souvenirs<br /><small>in your logbook</small></span></div>
+        <div class="summary-divider"></div>
+        <div><span class="summary-number" id="country-count">0</span><span>countries<br /><small>you've carried home</small></span></div>
+        <p id="category-breakdown" class="category-breakdown" aria-label="Collection categories"></p><p id="save-status" class="save-status" role="status">Your collection is saved locally</p>
+      </section>
+      <section class="workspace" id="collection" aria-labelledby="collection-title">
+        <div class="library">
+          <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2 id="collection-title">Your souvenirs <span id="result-count">(0)</span></h2></div><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search your memories" /></label></div>
+          <div class="toolbar" aria-label="Collection controls"><div class="filter-group" role="group" aria-label="Filter by category"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="Wearable">Wearable</button><button class="filter" data-filter="Decorative">Decorative</button><button class="filter" data-filter="Edible">Edible</button><button class="filter" data-filter="Paper">Paper</button><button class="filter" data-filter="Other">Other</button></div><div class="control-selects"><label class="sort-label">Mood <select id="mood-filter"><option value="all">All moods</option><option value="joyful">😄 Joyful</option><option value="sentimental">🥺 Sentimental</option><option value="funny">😂 Funny</option><option value="awe">🤩 Awe-struck</option></select></label><label class="sort-label">Sort by <select id="sort"><option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="destination">Destination A–Z</option></select></label><button class="clear-filters" id="clear-filters" hidden>Clear filters</button></div></div>
+          <div class="collection-meta"><p id="collection-meta">Showing every saved memory</p><div class="collection-actions"><div class="view-toggle" role="group" aria-label="Choose collection view"><button class="view-button active" data-view="grid" aria-pressed="true">▦ Grid</button><button class="view-button" data-view="list" aria-pressed="false">☷ List</button></div><button class="backup-button" id="export-data">Export</button><button class="backup-button" id="import-data">Import</button><input id="import-file" type="file" accept="application/json" hidden /></div></div>
+          <div id="loading" class="state loading" hidden><span class="spinner"></span>Opening your logbook…</div>
+          <div id="empty" class="state empty"><span class="empty-icon">◌</span><h3>No souvenirs here yet</h3><p>Every trip has a small treasure waiting to be remembered.</p><a class="secondary-button" href="#add">Add your first one</a></div>
+          <div id="grid" class="souvenir-grid" aria-live="polite"></div>
+        </div>
+        <aside class="composer" id="add" aria-labelledby="add-title"><div class="pin" aria-hidden="true"></div><p class="eyebrow">NEW ENTRY</p><h2 id="add-title">Add a little<br /><em>evidence</em> of the trip.</h2><p class="form-intro">The object is small. The memory doesn’t have to be.</p><form id="souvenir-form" novalidate><div class="field"><label for="item-name">Item name</label><input id="item-name" name="name" required maxlength="60" placeholder="e.g. Blue tile magnet" /></div><div class="field"><label for="description">Short description</label><textarea id="description" name="description" rows="2" maxlength="140" placeholder="What does it look and feel like?"></textarea></div><div class="two-fields"><div class="field"><label for="city">City</label><input id="city" name="city" required maxlength="40" placeholder="Lisbon" /></div><div class="field"><label for="country">Country</label><input id="country" name="country" required maxlength="40" placeholder="Portugal" /></div></div><div class="two-fields"><div class="field"><label for="date">Date acquired</label><input id="date" name="date" type="date" required /></div><div class="field"><label for="category">Category</label><select id="category" name="category"><option>Decorative</option><option>Wearable</option><option>Edible</option><option>Paper</option><option>Other</option></select></div></div><fieldset class="mood-field"><legend>Mood tag</legend><div class="moods"><label><input type="radio" name="mood" value="joyful" checked /><span>😄<small>Joyful</small></span></label><label><input type="radio" name="mood" value="sentimental" /><span>🥺<small>Sentimental</small></span></label><label><input type="radio" name="mood" value="funny" /><span>😂<small>Funny</small></span></label><label><input type="radio" name="mood" value="awe" /><span>🤩<small>Awe-struck</small></span></label></div></fieldset><div class="field"><label for="memory">Memory note <span>one sentence</span></label><textarea id="memory" name="memory" required maxlength="180" rows="3" placeholder="I found it after getting caught in the rain…"></textarea></div><p id="form-error" class="form-error" role="alert"></p><button class="submit-button" type="submit">Save to logbook <span>→</span></button></form></aside>
+      </section>
+    </main>
+    <div id="toast-region" class="toast-region" aria-live="assertive" aria-atomic="true"></div>
+    <dialog id="delete-dialog" aria-labelledby="delete-title"><div class="dialog-icon">!</div><h2 id="delete-title">Remove this memory?</h2><p>This souvenir will be removed from your logbook permanently.</p><div class="dialog-actions"><button class="secondary-button" value="cancel">Keep it</button><button class="danger-button" value="confirm">Remove souvenir</button></div></dialog>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
