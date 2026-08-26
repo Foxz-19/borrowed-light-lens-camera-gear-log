@@ -1,0 +1,11 @@
+import { compare } from './calculator.js';
+import { clearUI, readProducts, renderProducts, showResults, toast } from './ui.js';
+const template = /** @type {HTMLTemplateElement} */ (document.querySelector('#product-template'));
+const form = /** @type {HTMLFormElement} */ (document.querySelector('#comparator'));
+const dialog = /** @type {HTMLDialogElement} */ (document.querySelector('#confirm-reset'));
+renderProducts(template);
+form.addEventListener('submit', event => { event.preventDefault(); if (!showResults(compare(readProducts()))) form.querySelector(':invalid, .price')?.focus(); });
+document.querySelector('#reset').addEventListener('click', () => dialog.showModal());
+document.querySelector('#cancel-reset').addEventListener('click', () => dialog.close());
+document.querySelector('#confirm-reset-button').addEventListener('click', () => { clearUI(); dialog.close(); toast('All fields cleared.'); document.querySelector('.name').focus(); });
+dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });

@@ -1,82 +1,22 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Plan exactly how many books fit on your shelf." />
-    <meta name="theme-color" content="#f4f0e8" />
-    <title>Shelfwise — Bookshelf space planner</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <a class="skip-link" href="#planner">Skip to planner</a>
-    <main class="app-shell">
-      <header class="masthead">
-        <a class="brand" href="#planner" aria-label="Shelfwise home">Shelfwise<span>°</span></a>
-        <p class="eyebrow">Bookshelf space planner</p>
-      </header>
-
-      <section class="workspace" id="planner" aria-labelledby="page-title">
-        <div class="intro">
-          <p class="eyebrow">Make room for good stories</p>
-          <h1 id="page-title">See the shelf<br />before the shuffle.</h1>
-          <p>Set the span, place each book, and know precisely when you have run out of room.</p>
-        </div>
-
-        <aside class="controls" aria-label="Shelf controls">
-          <form id="shelf-form" novalidate>
-            <fieldset>
-              <legend>Shelf dimensions</legend>
-              <div class="field-row">
-                <label for="shelf-width">Total width</label>
-                <div class="measure-input">
-                  <input id="shelf-width" name="shelfWidth" type="number" inputmode="decimal" min="0.1" max="10000" step="0.1" value="30" autocomplete="off" required />
-                  <select id="unit" name="unit" aria-label="Measurement unit" autocomplete="off">
-                    <option value="in">inches</option>
-                    <option value="cm">centimeters</option>
-                  </select>
-                </div>
-              </div>
-              <button class="secondary" type="submit">Update Shelf</button>
-            </fieldset>
-          </form>
-
-          <form id="book-form" novalidate>
-            <fieldset>
-              <legend>Add a book</legend>
-              <label for="book-title">Short title</label>
-              <input id="book-title" name="title" maxlength="40" autocomplete="off" placeholder="e.g. The Left Hand of Darkness…" required />
-              <label for="book-width">Spine width <span id="width-unit">in</span></label>
-              <input id="book-width" name="width" type="number" inputmode="decimal" min="0.01" max="1000" step="0.01" placeholder="e.g. 1.20…" autocomplete="off" required />
-              <button class="primary" type="submit">Place on Shelf <span aria-hidden="true">→</span></button>
-            </fieldset>
-          </form>
-          <p id="form-error" class="form-error" role="alert"></p>
-        </aside>
-
-        <section class="shelf-stage" aria-labelledby="shelf-heading">
-          <div class="stage-topline"><h2 id="shelf-heading">Your shelf</h2><button class="text-button" id="clear-button" type="button">Clear Books</button></div>
-          <div class="meter" aria-label="Shelf capacity"><div id="meter-fill" class="meter-fill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0% of shelf capacity used"></div></div>
-          <div class="capacity-line"><strong id="remaining-space" aria-live="polite">30.00 in left</strong><span id="used-space">0.00 / 30.00 in</span></div>
-          <p id="overflow-note" class="overflow-note" aria-live="polite"></p>
-          <div class="shelf-visual" id="shelf-visual">
-            <div id="book-list" class="book-list" aria-label="Books on your shelf"></div>
-            <p id="empty-state" class="empty-state">Your shelf is waiting for its first story.</p>
-            <div class="shelf-plank" aria-hidden="true"></div>
-          </div>
-          <p class="hint">Click any spine to remove it.</p>
-        </section>
-      </section>
-    </main>
-
-    <dialog id="clear-dialog" aria-labelledby="dialog-title">
-      <form method="dialog">
-        <p class="eyebrow">Clear shelf</p><h2 id="dialog-title">Remove all books?</h2>
-        <p id="dialog-copy">This will remove 0 books from this shelf.</p>
-        <div class="dialog-actions"><button class="secondary" value="cancel">Keep Books</button><button class="danger" value="confirm">Clear Shelf</button></div>
-      </form>
-    </dialog>
-    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="src/app.js"></script>
-  </body>
-</html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="theme-color" content="#12362c"><title>Unitwise — Grocery price comparator</title><link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./enhancements.css"></head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to comparator</a>
+  <main class="shell" id="main-content">
+    <header class="intro"><p class="eyebrow">Grocery math, made clear</p><h1>Unitwise</h1><p>Compare shelf prices by the unit. Add up to three products and find the real deal.</p></header>
+    <form id="comparator" novalidate>
+      <div class="form-heading"><div><p class="eyebrow">1 · Add shelf labels</p><h2>What’s on the shelf?</h2></div><p>Fill one, two, or three cards. We convert grams, kilograms, ounces, and pounds automatically.</p></div>
+      <div class="product-grid" id="products" aria-label="Products to compare"></div>
+      <p id="form-error" class="form-error" role="alert" hidden></p>
+      <div class="actions"><button class="compare" type="submit">Compare prices <span aria-hidden="true">→</span></button><button class="reset" type="button" id="reset">Reset</button></div>
+    </form>
+    <section class="results" aria-labelledby="results-heading" aria-live="polite" aria-atomic="true" id="results" hidden>
+      <div><p class="eyebrow">The verdict</p><h2 id="results-heading">Best value</h2></div><p id="result-summary"></p>
+    </section>
+  </main>
+  <dialog id="confirm-reset" aria-labelledby="reset-title"><h2 id="reset-title">Start over?</h2><p>This clears the three product entries and comparison.</p><div class="dialog-actions"><button type="button" id="cancel-reset">Keep editing</button><button type="button" id="confirm-reset-button" class="danger">Clear all</button></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <template id="product-template"><article class="product" data-index=""><div class="product-top"><span class="number"></span><label class="product-name-label">Product <input class="name" type="text" maxlength="40" placeholder="e.g. Honey Oats" autocomplete="off"></label></div><div class="measurements"><label>Price <span class="currency">$</span><input class="price" inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0.00" aria-label="Price in dollars"></label><label>Quantity <input class="quantity" inputmode="decimal" type="number" min="0.001" step="any" placeholder="0"></label><label>Unit <select class="unit" aria-label="Unit"><option value="oz">oz</option><option value="g">g</option><option value="kg">kg</option><option value="lb">lb</option><option value="L">L</option><option value="mL">mL</option><option value="count">count</option></select></label></div><p class="unit-result" hidden></p></article></template>
+  <script type="module" src="./js/app.js"></script>
+</body></html>

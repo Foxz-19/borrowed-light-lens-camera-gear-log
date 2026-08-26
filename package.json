@@ -1,1 +1,1 @@
-{"name":"shelfwise","private":true,"type":"module","scripts":{"test":"npm run typecheck && node --test tests/*.test.mjs && npm run test:ui","typecheck":"tsc --noEmit","test:ui":"python tests/ui-smoke.py","start":"python -m http.server 4187"},"devDependencies":{"typescript":"^5.7.0"}}
+{"name":"unitwise","private":true,"type":"module","scripts":{"test":"node --test"}}
