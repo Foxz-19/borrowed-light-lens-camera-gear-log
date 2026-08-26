@@ -6,7 +6,7 @@
   <main class="shell" id="main-content">
     <header class="intro"><p class="eyebrow">Grocery math, made clear</p><h1>Unitwise</h1><p>Compare shelf prices by the unit. Add up to three products and find the real deal.</p></header>
     <form id="comparator" novalidate>
-      <div class="form-heading"><div><p class="eyebrow">1 · Add shelf labels</p><h2>What’s on the shelf?</h2></div><p>Fill one, two, or three cards. We convert grams, kilograms, ounces, and pounds automatically.</p></div>
+      <div class="form-heading"><div><p class="eyebrow">1 · Add shelf labels</p><h2>What’s on the shelf?</h2></div><p>Fill one, two, or three cards. We convert grams, kilograms, ounces, and pounds automatically.</p><button class="example" id="try-example" type="button">Try cereal example</button></div>
       <div class="product-grid" id="products" aria-label="Products to compare"></div>
       <p id="form-error" class="form-error" role="alert" hidden></p>
       <div class="actions"><button class="compare" type="submit">Compare prices <span aria-hidden="true">→</span></button><button class="reset" type="button" id="reset">Reset</button></div>
@@ -14,6 +14,7 @@
     <section class="results" aria-labelledby="results-heading" aria-live="polite" aria-atomic="true" id="results" hidden>
       <div><p class="eyebrow">The verdict</p><h2 id="results-heading">Best value</h2></div><p id="result-summary"></p>
     </section>
+    <details class="unit-guide"><summary>How the comparison works</summary><p>Weight packages are compared per gram and liquid packages per mL, even when shelf labels use different units. Count items only compare with other count items.</p></details>
   </main>
   <dialog id="confirm-reset" aria-labelledby="reset-title"><h2 id="reset-title">Start over?</h2><p>This clears the three product entries and comparison.</p><div class="dialog-actions"><button type="button" id="cancel-reset">Keep editing</button><button type="button" id="confirm-reset-button" class="danger">Clear all</button></div></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>

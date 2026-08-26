@@ -8,6 +8,8 @@ with sync_playwright() as p:
     page.wait_for_load_state("networkidle")
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     assert page.locator(".product").count() == 3
+    page.get_by_role("button", name="Try cereal example").click()
+    assert page.locator(".name").nth(0).input_value() == "Family box"
     names = page.locator(".name"); prices = page.locator(".price"); quantities = page.locator(".quantity")
     for i, values in enumerate((("4", "8"), ("5", "500"), ("6", "12"))):
         names.nth(i).fill(f"Product {i + 1}")
