@@ -1,6 +1,1 @@
-{
-  "name": "sunburn-summits-logbook",
-  "private": true,
-  "type": "module",
-  "scripts": {"test": "node --test", "check": "node --check src/data.js && node --check src/storage.js && node --check src/render.js && node --check src/main.js && npm test"}
-}
+{"scripts":{"dev":"vite","build":"tsc --noEmit && vite build","test":"vitest run"},"devDependencies":{"jsdom":"^26.1.0","typescript":"^5.9.2","vite":"^7.1.3","vitest":"^3.2.4"}}

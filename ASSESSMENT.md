@@ -1,156 +1,81 @@
-# Sunburn & Summits — Final Deep Assessment
+# Nest Egg — Deep Brief Assessment
 
-Audit date: 2026-08-26  
-Evaluation basis: `prompt.md` as the evaluator prompt and `brief.txt` as the product brief.
+## Scope and method
 
-## Final result
+This assessment follows `prompt.md` as the evaluation contract and `brief.txt` as the product specification. I inspected the complete HTML, CSS, TypeScript modules, package scripts, tests, and repository status, then verified the rendered application in Chromium at desktop and 375px mobile widths. The review explicitly checked the happy path and failure paths: invalid input, malformed persisted data, blocked storage reads/writes, failed destructive saves, refresh persistence, keyboard focus, reduced motion, and console errors.
 
-The project meets the souvenir-logbook brief end to end and is resilient across the tested off-happy-path cases. The final implementation is assessed at 5/5 in all three rubric categories.
+## Functional completeness
 
-The brief contains a second scoring description using 0–100 numbers, while `prompt.md` requires the final output to use 1–5 scores. This report follows the strict `prompt.md` output format and does not mix the two scales.
+| Requirement from `brief.txt` | Evidence checked | Result |
+|---|---|---|
+| Multiple visual jars | `AppData.jars` is an array; the collection renders every jar | Pass |
+| Name and optional emoji | Add form validates a required name and optional icon; rendering uses `textContent` | Pass |
+| Target amount | Positive, finite, bounded currency input is validated and normalized to cents | Pass |
+| Running saved amount | Deposits are immutable records; `savedAmount()` calculates the running total | Pass |
+| Deposit amount, optional note/date | Deposit dialog validates amount, note length, and ISO date; date defaults to today but remains editable/optional | Pass |
+| Liquid fill meter | CSS jar glass and liquid use the calculated percentage, capped at 100%; progressbar semantics expose the value | Pass |
+| Three statuses | `status()` derives Not Started, In Progress, or Reached 🎉 from saved/target values | Pass |
+| Add, deposit, delete | All three actions are reachable by keyboard and pointer; event delegation validates jar IDs before mutation | Pass |
+| Last five deposits | Collapsible `<details>` history shows `slice(0, 5)` and reports older entries without losing them | Pass |
+| Delete safety | Native dialog states the exact number of entries removed and supports cancel, Escape, backdrop click, and focus return | Pass |
+| Refresh persistence | Every successful mutation serializes versioned data to `localStorage`; Chromium reload check confirmed persistence | Pass |
+| Friendly motivation | Warm parchment/forest/amber token system, animated rising liquid, completion spark, empty state, and concise success feedback | Pass |
 
-## Brief requirements audit
+## Problem fit and design
 
-| Requirement | Implementation | Verification |
-| --- | --- | --- |
-| Item name | Required, trimmed, max length enforced in the form | Browser form flow |
-| Short description | Optional text captured in every stored object | `Souvenir` JSDoc contract and card rendering |
-| Destination city and country | Both required and shown as a destination badge | Browser add flow |
-| Date acquired | Required date input, validated against `YYYY-MM-DD` | Unit regression test for malformed dates |
-| Category | Wearable, Edible, Decorative, Paper, Other | Category buttons and category select |
-| Memory note | Required sentence-style text field, escaped before HTML rendering | Browser add flow and `esc()` rendering helper |
-| Mood tag | Joyful, Sentimental, Funny, Awe-struck with emoji | Mood radios and mood filter |
-| Browsable card grid | Responsive grid with item name, destination, chip, mood, date, description, and memory | Browser audit and responsive CSS review |
-| Category filtering | All five categories are reachable | `data-filter` controls and browser filter flow |
-| Mood filtering | Four mood values are reachable through `#mood-filter` | Browser filter flow |
-| Date sorting | Newest first and oldest first | `selectEntries()` tests |
-| Destination sorting | Country/city alphabetical sorting | `selectEntries()` test |
-| Persistent summary | Total saved souvenirs and unique countries are calculated from the full saved collection, not filtered results | `renderSummary(state.entries, visible.length)` |
-| Live persistence | `localStorage` key is versioned and survives reload | Browser reload audit |
-| No backend | Static HTML/CSS/ES modules only | Project structure inspection |
+The page begins with the working surface rather than an unrelated marketing hero: total saved, goal count, reached count, the sticky jar composer, and the current shelf. The visual jar is made from lightweight CSS so the progress itself is the focal point. The desktop two-column composition becomes a single vertical flow below 900px; the 375px browser check found no horizontal overflow. Actions have clear labels, destructive actions are separated visually, and the empty shelf points directly to the first form field.
 
-The memory note is always visible on the card, which is stronger than a hover-only implementation and remains usable on touch devices.
+Accessibility state was checked in the DOM: one logical `h1` inside `main`, labelled forms and dialogs, `aria-invalid` on validation failures, `role="alert"` for persistent failures, live jar updates, progressbar values, keyboard-visible focus outlines, and focus restoration after modal cancellation. `prefers-reduced-motion: reduce` disables animation and transitions globally; no action relies on motion to communicate its result.
 
-## Deep functional and resilience audit
+## Technical craft and resilience
 
-The following paths were exercised by `tests/browser_check.py`:
+- `src/domain.ts` owns explicit TypeScript interfaces, literal status types, pure calculations, input validation, and runtime `isAppData()` schema checks.
+- `src/storage.ts` isolates persistence and distinguishes valid data, blocked reads, malformed data, recovery-copy failure, and write failure. Corrupt data is never silently reseeded.
+- `src/render.ts` builds DOM nodes with `textContent`, avoiding HTML injection while keeping rendering independently testable.
+- `src/app.ts` is orchestration only: event wiring, dialog state, validation feedback, mutation-before-render ordering, and an outer initialization fallback.
+- CSS custom properties centralize colors, spacing, typography, and shadow values; repeated theme literals are avoided.
+- There are no credentials, backend calls, unsafe HTML interpolation, or hidden network dependencies beyond optional web fonts.
+- `npm test` is a real Vitest script, not an unconnected test file. Tests cover decimal-safe totals, all statuses, progress caps, input errors, runtime schema rejection through storage, recovery, write failure, safe rendering, progress semantics, and the five-entry history limit.
 
-1. Fresh load reaches the empty state after the loading indicator completes.
-2. A valid souvenir can be created and appears as one card.
-3. Reload restores the saved card from `localStorage`.
-4. Mood filtering and text search narrow the collection.
-5. A no-result filter uses a distinct “No matching souvenirs” state instead of incorrectly claiming the collection is empty.
-6. Clear filters restores the visible collection.
-7. Delete confirmation can be cancelled with the explicit Keep it button.
-8. Delete confirmation can be dismissed with Escape.
-9. Confirmed deletion updates both the collection and persistence state.
-10. Corrupt JSON in storage produces a visible recovery message and a fresh in-memory collection without silently overwriting the original data.
-11. Mobile width (`390px`) has no horizontal document overflow.
-12. Browser page errors were collected; the final audit produced none.
+## Negative-requirement resolution
 
-Automated unit coverage also verifies:
+The checklist’s unrelated examples (coffee, cocktail, gift, people, seasons, and episodes) were translated to the actual savings domain rather than copied into the UI. Their positive counterparts are satisfied here by typed jar/deposit CRUD, automatic three-state status derivation, per-shelf status summaries, exact delete impact, persistent storage, accessible collapsible histories, live updates, empty/fatal states, validated action IDs, and an executable test script. There is no navigation-as-toggle misuse, ingredient/swap surface, or unrelated data model to repair.
 
-- unique-country summary calculation is case-insensitive;
-- category, mood, and text filtering;
-- date and destination ordering;
-- complete stored-object validation;
-- malformed date rejection before persistence.
+## Debugging record
 
-## Technical craft audit
+1. The inherited staged snapshot was a Coffee Calculator and its original `ASSESSMENT.md` described that wrong product. The implementation and assessment were replaced with Nest Egg-specific modules and evidence.
+2. A first browser audit caught duplicate announcements for storage failures (the same message appeared in both an alert banner and a toast). Persistent failures now use one persistent alert; transient successes retain the toast.
+3. A modal failure audit found that a failed delete save only appeared behind the open dialog. The delete confirmation copy is now focusable and receives the write error while the dialog remains open, so the user can retry or cancel without losing context.
+4. A recovery-focus audit found that the corrupt-data alert was focused while its `<main>` ancestor was still hidden during boot. Initialization now reveals the application before focusing the persistent warning; Chromium confirms `document.activeElement` is `persistent-message`.
+5. A source-budget audit measured all non-markdown/non-text repository files at 39,953 bytes before the final focus fix and 39,953 bytes after the same-length ordering correction; this remains below the strict 40,000-byte limit. Generated dependencies and build output are ignored.
 
-### Architecture
+## Verification evidence
 
-The implementation is separated into explicit ES modules:
+- `npm test`: **9 tests passed across 3 files**.
+- `npm run build`: strict TypeScript check and Vite production build passed.
+- Chromium workflow: create jar, reject invalid form, add six deposits, reach 100%, verify five-entry history, reload, confirm exact delete count, cancel with focus restoration, delete, test mobile overflow, test corrupt storage, and verify no console/page errors.
+- Targeted Chromium recovery regression: corrupt storage warning is visible and focused; toast is hidden; failed delete save keeps the dialog open and focuses its inline error.
+- `git diff --check`: no whitespace errors.
+- Raw non-markdown/non-text source footprint: **under 40KB**.
 
-- `src/data.js` — domain constants, data contract, form parsing, validation, summary, filtering, sorting.
-- `src/storage.js` — guarded localStorage read/write boundary.
-- `src/render.js` — summary, card, and empty-state rendering.
-- `src/main.js` — state, event wiring, edit/delete/import/export interactions, and global failure feedback.
-
-There is no single IIFE containing all state, rendering, and event wiring. Pure logic is directly testable, while browser-only behavior is covered by the Playwright audit.
-
-### Data and security hygiene
-
-- User-generated values are escaped through `esc()` before insertion into card HTML.
-- Storage reads reject malformed shapes through `isSouvenir()`.
-- Dates, category values, and mood values are validated at the form boundary.
-- Storage access failures are caught and surfaced to the user.
-- Storage write failures appear both inline beside the form and in a persistent error toast.
-- Import files are parsed and validated before replacing the current collection.
-- No credentials, network API, or backend dependency exists.
-
-### Accessibility and interaction quality
-
-- Form controls have visible labels and meaningful names.
-- Icon-only edit/delete buttons have accessible labels.
-- Toasts and status changes use live/status regions.
-- Filter buttons expose pressed state.
-- The dialog has explicit confirmation, cancel, Escape handling, and focus restoration.
-- A keyboard-visible skip link targets the collection landmark.
-- `:focus-visible` styles are present for buttons, links, and form controls.
-- Reduced motion disables transitions/animations through `prefers-reduced-motion`.
-- Dialog overflow is contained and mobile width avoids horizontal overflow.
-- The layout uses one clear visual system with shared CSS custom properties for color, spacing, type, radius, and shadow.
-
-Current interface guidance was also checked against the [Vercel Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md), including labels, focus states, live feedback, semantic actions, reduced motion, content overflow, and destructive-action confirmation.
-
-## Negative-requirement checklist
-
-The applicable negative statements from `brief.txt` have their positive counterparts:
-
-- Shared design tokens exist in `:root`; repeated visual values are represented by variables where they are system-level values.
-- Corrupt and inaccessible storage produce visible user feedback.
-- Logic is split across ES modules rather than one flat IIFE.
-- Tests are wired to `npm test` through `npm run check`.
-- JSDoc documents the `Souvenir` shape and public pure functions.
-- Runtime validation enforces the storage boundary; the contract is not documentation-only.
-- Rendering is extracted into `render.js`.
-- Risky storage, import, export, parsing, and browser operations have failure paths.
-- A loading indicator, empty state, no-results state, and error fallback are present.
-- The form is structured as a sticky desktop composer and responsive mobile section.
-- Destructive deletion requires explicit confirmation and supports cancel/Escape recovery.
-- Error feedback remains available in the inline form region and the persistent error toast.
-- The document has a logical `h1`/`h2` hierarchy inside the main landmark.
-- The browser test is runnable directly and unit tests are part of the npm check command.
-
-Several negative statements refer to unrelated cocktail-picker, drink, ingredient, people, gifts, shows, episodes, or status-cycle features. Those are not requirements of the Sunburn & Summits brief and are correctly treated as non-applicable rather than adding unrelated product scope.
-
-## Constraint check
-
-Raw non-markdown/text files were counted recursively outside `.git`:
-
-```text
-39,974 characters
-```
-
-This is below the 40,000-character limit. The count includes application source, package metadata, unit tests, and the compact browser audit harness; `prompt.md`, `brief.txt`, and this report are excluded per the stated rule.
-
-Final verification commands:
-
-```text
-npm run check        PASS — syntax check plus 5/5 unit tests
-python tests/browser_check.py  PASS — browser audit
-git diff --check     PASS
-```
-
-## Final evaluator JSON
+## Final evaluation
 
 ```json
 {
   "evaluation": {
     "completeness": {
       "score": 5,
-      "reasoning": "All brief-required souvenir fields, card-grid browsing, category and mood filters, date and destination sorting, live total and unique-country summary, and localStorage persistence are implemented and reachable. The tested off-happy-path behavior includes required-field validation, malformed dates, corrupt storage recovery, blocked persistence feedback, no-result filtering, delete cancellation, Escape dismissal, and mobile overflow protection."
+      "reasoning": "All brief features are implemented and reachable: multiple jars with name/icon/target, deposit logging with note/date, running totals, liquid progress, all three statuses, five-entry histories, add/deposit/delete flows, localStorage persistence, and celebratory completion. Validation, recovery, modal confirmation, and visible storage failures cover off-happy-path behavior."
     },
     "problem_solving_design": {
       "score": 5,
-      "reasoning": "The product directly addresses the emotional travel-memory problem with a coherent field-notebook visual language, a clear add-and-browse workflow, responsive grid/list views, visible memory context, live collection orientation, filter recovery, and thoughtful empty/loading/error states. The UI is responsive, keyboard-aware, touch-safe, and the browser audit confirmed the core flow at desktop and mobile widths."
+      "reasoning": "The product directly supports the savings problem with a focused shelf workspace, sticky creation form, large visual jars, clear remaining amounts, status summaries, a useful empty state, responsive mobile composition, keyboard-visible focus, live feedback, and reduced-motion support. The warm visual system motivates without obscuring the core actions."
     },
     "technical_craft": {
       "score": 5,
-      "reasoning": "The implementation has clear ES module boundaries, JSDoc data contracts, runtime storage validation, escaped user content, guarded persistence/import/export operations, explicit failure feedback, focused rendering helpers, reduced-motion handling, accessible focus behavior, and automated tests wired into npm scripts. The full non-markdown/text source is 39,974 characters, under the 40KB constraint, with no oversized unstructured source addition."
+      "reasoning": "The solution uses strict TypeScript modules, explicit interfaces, runtime storage validation, pure domain functions, safe text-based DOM rendering, centralized CSS tokens, defensive action validation, resilient error boundaries, accessible dialogs, executable unit/DOM tests, and Chromium regression checks. The raw source footprint remains below the 40KB constraint and contains no credentials or unsafe HTML interpolation."
     },
-    "overall_summary": "Sunburn & Summits is a complete, resilient, and polished souvenir logbook implementation. The final audit fixed the delete-dialog cancel/focus path, strengthened browser compatibility and validation, added accessibility and responsive safeguards, verified corrupt and blocked storage behavior, and confirmed the submission remains under the raw-source limit."
+    "overall_summary": "Nest Egg is an exceptional, brief-complete savings goal tracker. Deep review found and fixed duplicate persistence announcements, hidden-modal save feedback, and recovery-message focus timing. The final implementation passes unit, build, responsive, persistence, accessibility-state, failure-path, and source-budget checks."
   }
 }
 ```

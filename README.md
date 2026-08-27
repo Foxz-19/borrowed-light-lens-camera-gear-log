@@ -1,1 +1,0 @@
-# sunburn-summits-travel-souvenir-logbook

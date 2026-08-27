@@ -1,52 +1,85 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#173e4a" />
-    <title>Sunburn & Summits · Souvenir logbook</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <a class="skip-link" href="#collection">Skip to collection</a>
-    <header class="topbar">
-      <a class="brand" href="./" aria-label="Sunburn and Summits home"><span class="brand-mark">✦</span><span>Sunburn <i>&</i> Summits</span></a>
-      <p class="topbar-note">A record of little things that made the journey</p>
-      <a class="jump-link" href="#collection">View collection <span>↓</span></a>
-    </header>
-    <main>
-      <section class="intro" aria-labelledby="page-title">
-        <div class="intro-copy">
-          <p class="eyebrow">TRAVEL SOUVENIR LOGBOOK</p>
-          <h1 id="page-title">Keep the <em>feeling</em><br />of the journey.</h1>
-          <p class="lede">Catalog the physical treasures that came home with you, and the stories they carry.</p>
-          <a class="primary-button" href="#add">＋ Add a souvenir</a>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nest Egg — Savings Goal Jars</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to your goals</a>
+  <header class="masthead">
+    <a class="brand" href="#main" aria-label="Nest Egg home"><span aria-hidden="true">◒</span> Nest Egg</a>
+    <p class="privacy"><span aria-hidden="true">●</span> Saved on this device</p>
+  </header>
+
+  <div id="boot-status" class="boot-status" role="status"><span aria-hidden="true"></span> Opening your savings shelf…</div>
+  <div id="fatal-error" class="fatal-error" role="alert" hidden>
+    <b>We couldn’t open Nest Egg.</b><span>Refresh the page to try again. Your saved data has not been changed.</span>
+  </div>
+
+  <main id="main" hidden>
+    <section class="overview" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Your savings shelf</p>
+        <h1 id="page-title">Small deposits.<br><em>Big plans.</em></h1>
+      </div>
+      <dl class="totals" aria-label="Savings overview">
+        <div><dt>Saved</dt><dd id="total-saved">$0</dd></div>
+        <div><dt>Across</dt><dd id="goal-count">0 goals</dd></div>
+        <div><dt>Reached</dt><dd id="reached-count">0</dd></div>
+      </dl>
+    </section>
+
+    <p id="persistent-message" class="persistent-message" role="alert" tabindex="-1" hidden></p>
+
+    <section class="workspace" aria-label="Savings goals workspace">
+      <aside class="composer" aria-labelledby="new-goal-title">
+        <div class="composer-head"><p class="step">NEW JAR</p><h2 id="new-goal-title">What are you saving for?</h2></div>
+        <form id="jar-form" novalidate>
+          <div class="name-row">
+            <label class="emoji-field">Icon <span>optional</span><input id="jar-emoji" name="emoji" maxlength="8" placeholder="🌴" aria-describedby="emoji-help emoji-error"><small id="emoji-help">One emoji works best.</small><small id="emoji-error" class="field-error"></small></label>
+            <label>Goal name<input id="jar-name" name="name" maxlength="50" required placeholder="Summer escape" aria-describedby="name-error"><small id="name-error" class="field-error"></small></label>
+          </div>
+          <label>Target amount<div class="money-input"><span aria-hidden="true">$</span><input id="jar-target" name="target" type="number" min="0.01" max="999999999" step="0.01" inputmode="decimal" required placeholder="1,200" aria-describedby="target-error"></div><small id="target-error" class="field-error"></small></label>
+          <p id="form-message" class="form-message" role="alert" tabindex="-1"></p>
+          <button class="primary" type="submit"><span>Create savings jar</span><span aria-hidden="true">↗</span></button>
+        </form>
+        <p class="local-note"><span aria-hidden="true">⌂</span> Private by design. Everything stays in this browser.</p>
+      </aside>
+
+      <section class="collection" aria-labelledby="collection-title">
+        <div class="collection-head">
+          <div><p class="eyebrow">In progress</p><h2 id="collection-title">Your jars</h2></div>
+          <p id="status-counts" class="status-counts" aria-label="Goal status summary"></p>
         </div>
-        <div class="sun-stamp" aria-hidden="true"><span>COLLECT<br />MEMORIES</span><strong>☼</strong><small>ONE OBJECT<br />AT A TIME</small></div>
-      </section>
-      <section class="summary" aria-label="Collection summary">
-        <div><span class="summary-number" id="total-count">0</span><span>souvenirs<br /><small>in your logbook</small></span></div>
-        <div class="summary-divider"></div>
-        <div><span class="summary-number" id="country-count">0</span><span>countries<br /><small>you've carried home</small></span></div>
-        <p id="category-breakdown" class="category-breakdown" aria-label="Collection categories"></p><p id="save-status" class="save-status" role="status">Your collection is saved locally</p>
-      </section>
-      <section class="workspace" id="collection" aria-labelledby="collection-title">
-        <div class="library">
-          <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2 id="collection-title">Your souvenirs <span id="result-count">(0)</span></h2></div><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search your memories" /></label></div>
-          <div class="toolbar" aria-label="Collection controls"><div class="filter-group" role="group" aria-label="Filter by category"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="Wearable">Wearable</button><button class="filter" data-filter="Decorative">Decorative</button><button class="filter" data-filter="Edible">Edible</button><button class="filter" data-filter="Paper">Paper</button><button class="filter" data-filter="Other">Other</button></div><div class="control-selects"><label class="sort-label">Mood <select id="mood-filter"><option value="all">All moods</option><option value="joyful">😄 Joyful</option><option value="sentimental">🥺 Sentimental</option><option value="funny">😂 Funny</option><option value="awe">🤩 Awe-struck</option></select></label><label class="sort-label">Sort by <select id="sort"><option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="destination">Destination A–Z</option></select></label><button class="clear-filters" id="clear-filters" hidden>Clear filters</button></div></div>
-          <div class="collection-meta"><p id="collection-meta">Showing every saved memory</p><div class="collection-actions"><div class="view-toggle" role="group" aria-label="Choose collection view"><button class="view-button active" data-view="grid" aria-pressed="true">▦ Grid</button><button class="view-button" data-view="list" aria-pressed="false">☷ List</button></div><button class="backup-button" id="export-data">Export</button><button class="backup-button" id="import-data">Import</button><input id="import-file" type="file" accept="application/json" hidden /></div></div>
-          <div id="loading" class="state loading" hidden><span class="spinner"></span>Opening your logbook…</div>
-          <div id="empty" class="state empty"><span class="empty-icon">◌</span><h3>No souvenirs here yet</h3><p>Every trip has a small treasure waiting to be remembered.</p><a class="secondary-button" href="#add">Add your first one</a></div>
-          <div id="grid" class="souvenir-grid" aria-live="polite"></div>
+        <div id="empty-state" class="empty-state">
+          <div class="empty-jar" aria-hidden="true"><span>＋</span></div>
+          <h3>Your shelf is ready.</h3><p>Create a jar for something worth looking forward to.</p>
+          <button class="text-button" type="button" data-action="focus-form">Create your first jar <span aria-hidden="true">→</span></button>
         </div>
-        <aside class="composer" id="add" aria-labelledby="add-title"><div class="pin" aria-hidden="true"></div><p class="eyebrow">NEW ENTRY</p><h2 id="add-title">Add a little<br /><em>evidence</em> of the trip.</h2><p class="form-intro">The object is small. The memory doesn’t have to be.</p><form id="souvenir-form" novalidate><div class="field"><label for="item-name">Item name</label><input id="item-name" name="name" required maxlength="60" placeholder="e.g. Blue tile magnet" /></div><div class="field"><label for="description">Short description</label><textarea id="description" name="description" rows="2" maxlength="140" placeholder="What does it look and feel like?"></textarea></div><div class="two-fields"><div class="field"><label for="city">City</label><input id="city" name="city" required maxlength="40" placeholder="Lisbon" /></div><div class="field"><label for="country">Country</label><input id="country" name="country" required maxlength="40" placeholder="Portugal" /></div></div><div class="two-fields"><div class="field"><label for="date">Date acquired</label><input id="date" name="date" type="date" required /></div><div class="field"><label for="category">Category</label><select id="category" name="category"><option>Decorative</option><option>Wearable</option><option>Edible</option><option>Paper</option><option>Other</option></select></div></div><fieldset class="mood-field"><legend>Mood tag</legend><div class="moods"><label><input type="radio" name="mood" value="joyful" checked /><span>😄<small>Joyful</small></span></label><label><input type="radio" name="mood" value="sentimental" /><span>🥺<small>Sentimental</small></span></label><label><input type="radio" name="mood" value="funny" /><span>😂<small>Funny</small></span></label><label><input type="radio" name="mood" value="awe" /><span>🤩<small>Awe-struck</small></span></label></div></fieldset><div class="field"><label for="memory">Memory note <span>one sentence</span></label><textarea id="memory" name="memory" required maxlength="180" rows="3" placeholder="I found it after getting caught in the rain…"></textarea></div><p id="form-error" class="form-error" role="alert"></p><button class="submit-button" type="submit">Save to logbook <span>→</span></button></form></aside>
+        <div id="jar-list" class="jar-list" aria-live="polite" aria-busy="true"></div>
       </section>
-    </main>
-    <div id="toast-region" class="toast-region" aria-live="assertive" aria-atomic="true"></div>
-    <dialog id="delete-dialog" aria-labelledby="delete-title"><div class="dialog-icon">!</div><h2 id="delete-title">Remove this memory?</h2><p>This souvenir will be removed from your logbook permanently.</p><div class="dialog-actions"><button class="secondary-button" value="cancel">Keep it</button><button class="danger-button" value="confirm">Remove souvenir</button></div></dialog>
-    <script type="module" src="src/main.js"></script>
-  </body>
+    </section>
+  </main>
+
+  <dialog id="deposit-dialog" aria-labelledby="deposit-title">
+    <form id="deposit-form" method="dialog" novalidate>
+      <div class="dialog-head"><div><p class="eyebrow">Add to jar</p><h2 id="deposit-title">Log a deposit</h2><p id="deposit-context"></p></div><button class="icon-button" type="button" data-action="close-deposit" aria-label="Close deposit dialog">×</button></div>
+      <label>Amount<div class="money-input"><span aria-hidden="true">$</span><input id="deposit-amount" name="amount" type="number" min="0.01" max="999999999" step="0.01" inputmode="decimal" required autofocus aria-describedby="deposit-amount-error"></div><small id="deposit-amount-error" class="field-error"></small></label>
+      <label>Note <span>optional</span><input id="deposit-note" name="note" maxlength="80" placeholder="Payday top-up" aria-describedby="deposit-note-error"><small id="deposit-note-error" class="field-error"></small></label>
+      <label>Date <span>optional</span><input id="deposit-date" name="date" type="date" aria-describedby="deposit-date-error"><small id="deposit-date-error" class="field-error"></small></label>
+      <p id="deposit-message" class="form-message" role="alert"></p>
+      <div class="dialog-actions"><button type="button" class="secondary" data-action="close-deposit">Cancel</button><button class="primary" type="submit">Add deposit</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="delete-dialog" aria-labelledby="delete-title">
+    <div class="confirm-content"><span class="warning-mark" aria-hidden="true">!</span><p class="eyebrow">Delete jar</p><h2 id="delete-title">Let this goal go?</h2><p id="delete-copy" tabindex="-1"></p><div class="dialog-actions"><button id="cancel-delete" class="secondary" type="button">Keep jar</button><button id="confirm-delete" class="danger" type="button">Delete permanently</button></div></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+  <script type="module" src="/src/app.ts"></script>
+</body>
 </html>
