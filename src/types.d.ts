@@ -1,3 +1,2 @@
-export interface Chore { id: string; name: string }
-export interface LoadResult { chores: Chore[]; error?: string }
-export interface AppState { chores: Chore[]; rotation: number; spinning: boolean; winnerId: string | null }
+export interface FoodLabel { id: string; food: string; stored: string; note: string }
+export interface LoadResult { labels: FoodLabel[]; error?: string }

@@ -1,20 +1,4 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { loadChores, saveChores } from '../src/storage.js';
-
-const memory = (value = null) => ({ value, getItem(){return this.value}, setItem(_k,v){this.value=v}, removeItem(){this.value=null} });
-
-test('storage round-trips valid chores', () => {
-  const store = memory(); const chores = [{id:'1',name:'Dishes'}];
-  assert.equal(saveChores(store, chores), null); assert.deepEqual(loadChores(store).chores, chores);
-});
-
-test('corrupt storage resets with a user-facing error', () => {
-  const store = memory('{broken'); const loaded = loadChores(store);
-  assert.deepEqual(loaded.chores, []); assert.match(loaded.error, /safely reset/);
-});
-
-test('blocked storage produces explicit load and save errors', () => {
-  const blocked = { getItem(){throw Error('blocked')}, setItem(){throw Error('blocked')}, removeItem(){} };
-  assert.match(loadChores(blocked).error, /blocked/); assert.match(saveChores(blocked, []), /could not be saved/);
-});
+import test from 'node:test'; import assert from 'node:assert/strict'; import { loadLabels, saveLabels } from '../src/storage.js';
+const store = (value = null) => ({value,getItem(){return this.value},setItem(_k,v){this.value=v},removeItem(){this.value=null}});
+test('labels persist and recover from corrupt data with a visible error', () => { const s=store(); const labels=[{id:'1',food:'Rice',stored:'2026-08-28',note:''}]; assert.equal(saveLabels(s,labels),null); assert.deepEqual(loadLabels(s).labels,labels); const bad=loadLabels(store('{oops')); assert.deepEqual(bad.labels,[]); assert.match(bad.error,/damaged/); });
+test('blocked storage reports read and write errors', () => { const s={getItem(){throw Error()},setItem(){throw Error()},removeItem(){}}; assert.match(loadLabels(s).error,/blocked/); assert.match(saveLabels(s,[]),/could not be saved/); });

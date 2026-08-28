@@ -1,26 +1,5 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { pickIndex, targetRotation, validateChore, wheelGradient } from '../src/core.js';
-
-test('validation trims, rejects empty, duplicates, and an eleventh chore', () => {
-  assert.deepEqual(validateChore('  Wash   dishes ', []), { name: 'Wash dishes' });
-  assert.equal(validateChore(' ', []).error, 'Enter a chore first.');
-  assert.match(validateChore('WASH DISHES', [{ id:'1', name:'Wash dishes' }]).error, /already/);
-  assert.match(validateChore('New', Array.from({length:10}, (_,i) => ({id:String(i),name:String(i)}))).error, /full/);
-});
-
-test('random picker stays in range at both edges', () => {
-  assert.equal(pickIndex(4, 0), 0); assert.equal(pickIndex(4, 1), 3);
-  assert.throws(() => pickIndex(0), RangeError);
-});
-
-test('target rotation lands selected wedge center under top pointer', () => {
-  const rotation = targetRotation(720, 4, 2);
-  assert.ok(rotation > 720 + 4 * 360);
-  assert.equal(((rotation + (2.5 * 90)) % 360 + 360) % 360, 0);
-});
-
-test('gradient creates one even stop pair per chore', () => {
-  const gradient = wheelGradient([{id:'1',name:'A'},{id:'2',name:'B'}]);
-  assert.match(gradient, /0% 50%/); assert.match(gradient, /50% 100%/);
-});
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { ageText, daysAgo, validateLabel } from '../src/core.js';
+const today = new Date(2026, 7, 28);
+test('label validation normalizes input and catches invalid or duplicate labels', () => { assert.deepEqual(validateLabel('  Lasagna   tray ', '2026-08-28', ' Reheat at 350°F ', []), {food:'Lasagna tray',stored:'2026-08-28',note:'Reheat at 350°F'}); assert.match(validateLabel('', '2026-08-28', '', []).error, /name/); assert.match(validateLabel('Soup', 'bad', '', []).error, /date/); assert.match(validateLabel('Soup', '2026-08-28', '', [{id:'1',food:'soup',stored:'2026-08-28',note:''}]).error, /already/); });
+test('age calculations are calendar-safe and future dates do not go negative', () => { assert.equal(daysAgo('2026-08-28', today), 0); assert.equal(daysAgo('2026-08-27', today), 1); assert.equal(daysAgo('2026-08-20', today), 8); assert.equal(daysAgo('2026-09-01', today), 0); assert.equal(ageText(1), 'Stored yesterday'); });

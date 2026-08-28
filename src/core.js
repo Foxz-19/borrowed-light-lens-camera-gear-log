@@ -1,38 +1,26 @@
 // @ts-check
-/** @typedef {import('./types').Chore} Chore */
+/** @typedef {import('./types').FoodLabel} FoodLabel */
+export const COLORS = ['#f6b94b','#91b78f','#ef7868','#8ba5be','#e5a36a','#b997c8'];
+export const MAX_NOTE = 120;
 
-export const MAX_CHORES = 10;
-export const COLORS = ['#ef6351','#f7b32b','#65b891','#3d7ea6','#8f6bb3','#ee7b9b','#e97844','#5c9eae','#a5a547','#7768ae'];
-
-/** @param {string} raw @param {Chore[]} chores */
-export function validateChore(raw, chores) {
-  const name = raw.trim().replace(/\s+/g, ' ');
-  if (!name) return { error: 'Enter a chore first.' };
-  if (name.length > 48) return { error: 'Keep chores to 48 characters or fewer.' };
-  if (chores.length >= MAX_CHORES) return { error: 'The wheel is full. Remove a chore before adding another.' };
-  if (chores.some((chore) => chore.name.toLocaleLowerCase() === name.toLocaleLowerCase())) return { error: 'That chore is already on the wheel.' };
-  return { name };
+/** @param {string} food @param {string} stored @param {string} note @param {FoodLabel[]} labels */
+export function validateLabel(food, stored, note, labels) {
+  const cleanFood = food.trim().replace(/\s+/g, ' '); const cleanNote = note.trim().replace(/\s+/g, ' ');
+  if (!cleanFood) return { error: 'Give this leftover a name.' };
+  if (cleanFood.length > 52) return { error: 'Food names must be 52 characters or fewer.' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(stored) || Number.isNaN(parseDate(stored).getTime())) return { error: 'Choose a valid stored date.' };
+  if (cleanNote.length > MAX_NOTE) return { error: 'Notes must be 120 characters or fewer.' };
+  if (labels.some((label) => label.food.toLocaleLowerCase() === cleanFood.toLocaleLowerCase() && label.stored === stored)) return { error: 'That food already has a label for this date.' };
+  return { food: cleanFood, stored, note: cleanNote };
 }
-
-/** @param {number} count @param {number} [random] */
-export function pickIndex(count, random = Math.random()) {
-  if (!Number.isInteger(count) || count < 1) throw new RangeError('A positive chore count is required.');
-  const safe = Number.isFinite(random) ? Math.min(Math.max(random, 0), 0.999999999) : 0;
-  return Math.floor(safe * count);
+/** @param {string} iso */
+export function parseDate(iso) { const [year, month, day] = iso.split('-').map(Number); return new Date(year, month - 1, day); }
+/** @param {string} iso @param {Date} [today] */
+export function daysAgo(iso, today = new Date()) {
+  const stored = parseDate(iso); const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.max(0, Math.floor((now.getTime() - stored.getTime()) / 86400000));
 }
-
-/** @param {number} current @param {number} count @param {number} index @param {number} [turns] */
-export function targetRotation(current, count, index, turns = 5) {
-  if (count < 1 || index < 0 || index >= count) throw new RangeError('Invalid wheel selection.');
-  const segment = 360 / count;
-  const landing = (360 - (index + 0.5) * segment) % 360;
-  const baseline = Math.ceil(current / 360) * 360 + turns * 360 + landing;
-  return baseline <= current ? baseline + 360 : baseline;
-}
-
-/** @param {Chore[]} chores */
-export function wheelGradient(chores) {
-  if (!chores.length) return 'conic-gradient(#ded8cc 0 100%)';
-  const size = 100 / chores.length;
-  return `conic-gradient(${chores.map((_, i) => `${COLORS[i]} ${i * size}% ${(i + 1) * size}%`).join(',')})`;
-}
+/** @param {string} iso */
+export function formatStored(iso) { return parseDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+/** @param {number} age */
+export function ageText(age) { return age === 0 ? 'Stored today' : age === 1 ? 'Stored yesterday' : `Stored ${age} days ago`; }

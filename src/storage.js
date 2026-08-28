@@ -1,28 +1,16 @@
 // @ts-check
-/** @typedef {import('./types').Chore} Chore */
+/** @typedef {import('./types').FoodLabel} FoodLabel */
 /** @typedef {import('./types').LoadResult} LoadResult */
-const KEY = 'chore-roulette-v1';
-
+const KEY = 'leftovers-labels-v1';
 /** @param {Storage} storage @returns {LoadResult} */
-export function loadChores(storage) {
-  let raw;
-  try { raw = storage.getItem(KEY); }
-  catch {
-    return { chores: [], error: 'Saved chores could not be read. Storage may be blocked; changes may not persist.' };
-  }
-  if (!raw) return { chores: [] };
+export function loadLabels(storage) {
+  let raw; try { raw = storage.getItem(KEY); } catch { return { labels: [], error: 'Fridge storage is blocked. Labels will work for this session only.' }; }
+  if (!raw) return { labels: [] };
   try {
     const data = JSON.parse(raw);
-    if (!Array.isArray(data) || data.some((item) => !item || typeof item.id !== 'string' || typeof item.name !== 'string')) throw new TypeError('Invalid chore data');
-    return { chores: data.slice(0, 10) };
-  } catch {
-    try { storage.removeItem(KEY); } catch { /* recovery is still safe in memory */ }
-    return { chores: [], error: 'Saved chores were damaged, so the wheel was safely reset.' };
-  }
+    if (!Array.isArray(data) || data.some((x) => !x || typeof x.id !== 'string' || typeof x.food !== 'string' || typeof x.stored !== 'string' || typeof x.note !== 'string')) throw new TypeError('Invalid label data');
+    return { labels: data };
+  } catch { try { storage.removeItem(KEY); } catch { /* in-memory reset remains safe */ } return { labels: [], error: 'Saved labels were damaged, so the fridge was safely reset.' }; }
 }
-
-/** @param {Storage} storage @param {Chore[]} chores @returns {string | null} */
-export function saveChores(storage, chores) {
-  try { storage.setItem(KEY, JSON.stringify(chores)); return null; }
-  catch { return 'This change works for now, but could not be saved on this device.'; }
-}
+/** @param {Storage} storage @param {FoodLabel[]} labels */
+export function saveLabels(storage, labels) { try { storage.setItem(KEY, JSON.stringify(labels)); return null; } catch { return 'This label works now, but could not be saved on this device.'; } }
