@@ -3,83 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Nest Egg — Savings Goal Jars</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
+  <title>Chore Roulette</title>
+  <link rel="stylesheet" href="./src/styles.css">
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to your goals</a>
-  <header class="masthead">
-    <a class="brand" href="#main" aria-label="Nest Egg home"><span aria-hidden="true">◒</span> Nest Egg</a>
-    <p class="privacy"><span aria-hidden="true">●</span> Saved on this device</p>
+  <header class="topbar">
+    <a class="brand" href="#main" aria-label="Chore Roulette home"><span>CHORE</span><b>ROULETTE</b></a>
+    <p><span id="chore-count">0</span>/10 chores ready</p>
   </header>
 
-  <div id="boot-status" class="boot-status" role="status"><span aria-hidden="true"></span> Opening your savings shelf…</div>
-  <div id="fatal-error" class="fatal-error" role="alert" hidden>
-    <b>We couldn’t open Nest Egg.</b><span>Refresh the page to try again. Your saved data has not been changed.</span>
-  </div>
-
-  <main id="main" hidden>
-    <section class="overview" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow">Your savings shelf</p>
-        <h1 id="page-title">Small deposits.<br><em>Big plans.</em></h1>
+  <main id="main" class="app" aria-busy="true">
+    <section class="stage" aria-labelledby="page-title">
+      <div class="intro">
+        <p class="eyebrow">One spin. No debates.</p>
+        <h1 id="page-title">Let the wheel<br>pick the chore.</h1>
+        <p>Add the jobs nobody wants, then leave today’s assignment to chance.</p>
       </div>
-      <dl class="totals" aria-label="Savings overview">
-        <div><dt>Saved</dt><dd id="total-saved">$0</dd></div>
-        <div><dt>Across</dt><dd id="goal-count">0 goals</dd></div>
-        <div><dt>Reached</dt><dd id="reached-count">0</dd></div>
-      </dl>
+
+      <div class="wheel-area">
+        <div id="loader" class="loader" role="status"><span></span>Setting the table…</div>
+        <div id="wheel-wrap" class="wheel-wrap" hidden>
+          <div class="pointer" aria-hidden="true"></div>
+          <div id="wheel" class="wheel" role="img" aria-label="The chore wheel"></div>
+          <div class="hub" aria-hidden="true"><span>SPIN</span></div>
+        </div>
+        <button id="spin" class="spin-button" type="button" disabled>
+          <span id="spin-label" class="spin-label">Spin the wheel</span><span aria-hidden="true">↗</span>
+        </button>
+        <div id="result" class="result" aria-live="polite" aria-atomic="true">
+          <span>Today’s chore</span><strong id="winner">Waiting for a spin</strong>
+        </div>
+      </div>
     </section>
 
-    <p id="persistent-message" class="persistent-message" role="alert" tabindex="-1" hidden></p>
-
-    <section class="workspace" aria-label="Savings goals workspace">
-      <aside class="composer" aria-labelledby="new-goal-title">
-        <div class="composer-head"><p class="step">NEW JAR</p><h2 id="new-goal-title">What are you saving for?</h2></div>
-        <form id="jar-form" novalidate>
-          <div class="name-row">
-            <label class="emoji-field">Icon <span>optional</span><input id="jar-emoji" name="emoji" maxlength="8" placeholder="🌴" aria-describedby="emoji-help emoji-error"><small id="emoji-help">One emoji works best.</small><small id="emoji-error" class="field-error"></small></label>
-            <label>Goal name<input id="jar-name" name="name" maxlength="50" required placeholder="Summer escape" aria-describedby="name-error"><small id="name-error" class="field-error"></small></label>
+    <aside class="chores" aria-labelledby="chores-title">
+      <div class="composer">
+        <p class="eyebrow">Build your wheel</p>
+        <h2 id="chores-title">Household chores</h2>
+        <form id="chore-form" novalidate>
+          <label for="chore-input">New chore</label>
+          <div class="input-row">
+            <input id="chore-input" name="chore" maxlength="48" autocomplete="off" placeholder="e.g. Wash the dishes" required>
+            <button type="submit">Add <span aria-hidden="true">＋</span></button>
           </div>
-          <label>Target amount<div class="money-input"><span aria-hidden="true">$</span><input id="jar-target" name="target" type="number" min="0.01" max="999999999" step="0.01" inputmode="decimal" required placeholder="1,200" aria-describedby="target-error"></div><small id="target-error" class="field-error"></small></label>
-          <p id="form-message" class="form-message" role="alert" tabindex="-1"></p>
-          <button class="primary" type="submit"><span>Create savings jar</span><span aria-hidden="true">↗</span></button>
+          <p id="form-error" class="form-error" aria-live="assertive"></p>
         </form>
-        <p class="local-note"><span aria-hidden="true">⌂</span> Private by design. Everything stays in this browser.</p>
-      </aside>
-
-      <section class="collection" aria-labelledby="collection-title">
-        <div class="collection-head">
-          <div><p class="eyebrow">In progress</p><h2 id="collection-title">Your jars</h2></div>
-          <p id="status-counts" class="status-counts" aria-label="Goal status summary"></p>
-        </div>
-        <div id="empty-state" class="empty-state">
-          <div class="empty-jar" aria-hidden="true"><span>＋</span></div>
-          <h3>Your shelf is ready.</h3><p>Create a jar for something worth looking forward to.</p>
-          <button class="text-button" type="button" data-action="focus-form">Create your first jar <span aria-hidden="true">→</span></button>
-        </div>
-        <div id="jar-list" class="jar-list" aria-live="polite" aria-busy="true"></div>
-      </section>
-    </section>
+      </div>
+      <div class="list-head"><span>On the wheel</span><span>Tap × to remove</span></div>
+      <ul id="chore-list" class="chore-list" aria-label="Chores on the wheel"></ul>
+      <div id="empty" class="empty"><b>Your wheel is empty.</b><span>Add two or more chores to start spinning.</span></div>
+      <p id="persistent-status" class="persistent-status" role="alert" hidden></p>
+    </aside>
   </main>
 
-  <dialog id="deposit-dialog" aria-labelledby="deposit-title">
-    <form id="deposit-form" method="dialog" novalidate>
-      <div class="dialog-head"><div><p class="eyebrow">Add to jar</p><h2 id="deposit-title">Log a deposit</h2><p id="deposit-context"></p></div><button class="icon-button" type="button" data-action="close-deposit" aria-label="Close deposit dialog">×</button></div>
-      <label>Amount<div class="money-input"><span aria-hidden="true">$</span><input id="deposit-amount" name="amount" type="number" min="0.01" max="999999999" step="0.01" inputmode="decimal" required autofocus aria-describedby="deposit-amount-error"></div><small id="deposit-amount-error" class="field-error"></small></label>
-      <label>Note <span>optional</span><input id="deposit-note" name="note" maxlength="80" placeholder="Payday top-up" aria-describedby="deposit-note-error"><small id="deposit-note-error" class="field-error"></small></label>
-      <label>Date <span>optional</span><input id="deposit-date" name="date" type="date" aria-describedby="deposit-date-error"><small id="deposit-date-error" class="field-error"></small></label>
-      <p id="deposit-message" class="form-message" role="alert"></p>
-      <div class="dialog-actions"><button type="button" class="secondary" data-action="close-deposit">Cancel</button><button class="primary" type="submit">Add deposit</button></div>
+  <dialog id="delete-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-copy">
+    <form method="dialog">
+      <p class="eyebrow">Remove chore?</p>
+      <h2 id="dialog-title">Take it off the wheel</h2>
+          <p id="dialog-copy">This removes the chore.</p>
+      <div class="dialog-actions"><button value="cancel">Keep it</button><button class="danger" value="confirm">Remove</button></div>
     </form>
   </dialog>
-
-  <dialog id="delete-dialog" aria-labelledby="delete-title">
-    <div class="confirm-content"><span class="warning-mark" aria-hidden="true">!</span><p class="eyebrow">Delete jar</p><h2 id="delete-title">Let this goal go?</h2><p id="delete-copy" tabindex="-1"></p><div class="dialog-actions"><button id="cancel-delete" class="secondary" type="button">Keep jar</button><button id="confirm-delete" class="danger" type="button">Delete permanently</button></div></div>
-  </dialog>
-
-  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-  <script type="module" src="/src/app.ts"></script>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="./src/app.js"></script>
 </body>
 </html>
