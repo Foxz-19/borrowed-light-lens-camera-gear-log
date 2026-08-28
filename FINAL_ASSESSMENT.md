@@ -63,6 +63,7 @@ Date: 2026-08-28
 2. The first browser audit found `src/styles.css` was missing after the interrupted creation turn. The complete visual system was added and the resource audit was rerun.
 3. The stale-warning assertion first failed because CSS intentionally transforms the message to uppercase. The DOM was confirmed correct and the audit assertion was made case-insensitive rather than weakening the UI.
 4. Browser audit then passed all functional paths with no console errors: create, note, date age, stale warning, delete cancel/confirm, refresh persistence, corrupt storage, blocked writes, and mobile overflow.
+5. Final regression review found JavaScript date normalization accepting impossible dates such as `2026-02-31`. `isValidDate()` now round-trips all date components, and a regression test prevents recurrence.
 
 ## Verification evidence
 
