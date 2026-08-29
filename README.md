@@ -1,22 +1,19 @@
-# Ember
+# The Amber Cabinet
 
-A warm, browser-only candle burn-time estimator. It calculates from weight, unit, wick count, and diameter, then saves named candles in `localStorage`.
+A single-page cocktail ingredient tracker for a home bar. Add spirits and ingredients, track three stock states, filter by category, and remove bottles with confirmation. Inventory persists in `localStorage`.
 
-## Run
+## Run locally
 
-Requires Node.js 22+.
-
-```sh
+```bash
 npm install
 npm run dev
 ```
 
 ## Verify
 
-```sh
+```bash
 npm test
-npm run typecheck
 npm run build
 ```
 
-The estimate uses an 8-hour-per-ounce midpoint, reduces time by 15% per additional wick, and applies a clamped melt-pool factor relative to a 3-inch candle. Real burn time also depends on wax, fragrance, wick care, and environment.
+The app uses strict TypeScript with separate domain, storage, and view modules. Storage data is validated at load time; read/write and corrupt-data failures are surfaced both persistently and through an accessible live notification. The project stays below the brief's 40KB raw-source limit (Markdown and generated output excluded).

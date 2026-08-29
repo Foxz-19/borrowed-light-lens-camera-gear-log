@@ -1,7 +1,46 @@
-import{isCandle}from'./core.ts';import type{Candle,StorageLike,StorageResult}from'./types.ts';
-export const STORAGE_KEY='ember.candles.v1';
-export class CandleStore{
- private storage:StorageLike;constructor(storage:StorageLike){this.storage=storage}
- load():StorageResult<Candle[]>{try{const raw=this.storage.getItem(STORAGE_KEY);if(raw===null)return{ok:true,value:[]};const data:unknown=JSON.parse(raw);if(!Array.isArray(data)||!data.every(isCandle))throw Error('invalid');return{ok:true,value:data.sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}}catch(e){const corrupt=e instanceof SyntaxError||e instanceof Error&&e.message==='invalid';return{ok:false,value:[],corrupt,error:corrupt?'Saved candle data was damaged and could not be opened. New estimates still work.':'Browser storage is unavailable. Saved candles may disappear after refresh.'}}}
- save(value:Candle[]):StorageResult<Candle[]>{try{this.storage.setItem(STORAGE_KEY,JSON.stringify(value));return{ok:true,value}}catch{return{ok:false,value,error:'This change could not be saved in your browser. Keep this page open and try again.'}}}
+import { isCabinetItem } from "./domain";
+import type { CabinetItem } from "./types";
+
+const STORAGE_KEY = "amber-cabinet:v1";
+
+export interface LoadResult {
+  items: CabinetItem[];
+  warning?: string;
+}
+
+export interface SaveResult {
+  ok: boolean;
+  error?: string;
+}
+
+export class CabinetStorage {
+  constructor(private readonly storage: Storage, private readonly key = STORAGE_KEY) {}
+
+  load(): LoadResult {
+    let raw: string | null;
+    try {
+      raw = this.storage.getItem(this.key);
+    } catch {
+      return { items: [], warning: "This browser blocked access to saved cabinet data. Changes may not survive a refresh." };
+    }
+    if (!raw) return { items: [] };
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed) || !parsed.every(isCabinetItem)) {
+        return { items: [], warning: "Saved cabinet data was invalid. Nothing was overwritten; start fresh or restore your browser data." };
+      }
+      return { items: parsed };
+    } catch {
+      return { items: [], warning: "Saved cabinet data was invalid. Nothing was overwritten; start fresh or restore your browser data." };
+    }
+  }
+
+  save(items: CabinetItem[]): SaveResult {
+    try {
+      this.storage.setItem(this.key, JSON.stringify(items));
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "The cabinet could not be saved. Check browser storage permissions or available space." };
+    }
+  }
 }

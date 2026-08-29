@@ -1,16 +1,16 @@
 {
-  "name": "ember-candle-estimator",
+  "name": "amber-cabinet",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "node --experimental-strip-types --test test/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest run"
   },
   "devDependencies": {
-    "@types/node": "24.3.0",
+    "happy-dom": "20.11.15",
     "typescript": "5.9.2",
-    "vite": "7.3.6"
+    "vite": "8.2.2",
+    "vitest": "4.1.11"
   }
 }

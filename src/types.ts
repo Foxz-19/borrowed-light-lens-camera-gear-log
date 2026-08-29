@@ -1,6 +1,33 @@
-export type WeightUnit='oz'|'g';
-export interface Candle{id:string;name:string;weight:number;unit:WeightUnit;wicks:number;diameter:number;burnMinutes:number;createdAt:string}
-export interface CandleDraft{name:string;weight:string;unit:string;wicks:string;diameter:string}
-export type EstimateResult={ok:true;value:Omit<Candle,'id'|'createdAt'>}|{ok:false;field:keyof CandleDraft;error:string};
-export type StorageResult<T>={ok:true;value:T}|{ok:false;value:T;error:string;corrupt?:boolean};
-export interface StorageLike{getItem(key:string):string|null;setItem(key:string,value:string):void}
+export const CATEGORIES = ["Whiskey", "Gin", "Rum", "Tequila", "Brandy", "Liqueur", "Bitters", "Mixer", "Garnish", "Other"] as const;
+export const STATUSES = ["in-stock", "running-low", "out"] as const;
+
+export type Category = typeof CATEGORIES[number];
+export type StockStatus = typeof STATUSES[number];
+
+export interface CabinetItem {
+  id: string;
+  name: string;
+  category: Category;
+  note: string;
+  status: StockStatus;
+  createdAt: number;
+}
+
+export interface CabinetSummary {
+  total: number;
+  inStock: number;
+  runningLow: number;
+  out: number;
+}
+
+export interface NewItemInput {
+  name: string;
+  category: string;
+  note: string;
+  status: string;
+}
+
+export interface ValidationResult {
+  item?: CabinetItem;
+  errors: Partial<Record<"name" | "category" | "status", string>>;
+}
