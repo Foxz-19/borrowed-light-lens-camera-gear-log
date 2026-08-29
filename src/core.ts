@@ -5,9 +5,9 @@ export function estimateMinutes(weight:number,unit:WeightUnit,wicks:number,diame
  const oz=unit==='g'?weight/28.3495:weight,wick=.85**(wicks-1),pool=Math.min(1.3,Math.max(.7,3/diameter));
  return Math.max(1,Math.round(oz*8*wick*pool*60));
 }
-export function validateDraft(d:CandleDraft):EstimateResult{
+export function validateDraft(d:CandleDraft,requireName=true):EstimateResult{
  const name=clean(d.name),weight=Number(d.weight),wicks=Number(d.wicks),diameter=Number(d.diameter);
- if(!name)return{ok:false,field:'name',error:'Give this candle a name.'};
+ if(!name&&requireName)return{ok:false,field:'name',error:'Give this candle a name.'};
  if(name.length>50)return{ok:false,field:'name',error:'Keep the name to 50 characters or fewer.'};
  if(!isUnit(d.unit))return{ok:false,field:'unit',error:'Choose ounces or grams.'};
  if(!Number.isFinite(weight)||weight<=0||weight>(d.unit==='g'?10000:350))return{ok:false,field:'weight',error:`Enter a weight between 0 and ${d.unit==='g'?'10,000 grams':'350 ounces'}.`};
