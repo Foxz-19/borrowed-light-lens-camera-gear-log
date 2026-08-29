@@ -26,10 +26,10 @@ export class CabinetStorage {
     if (!raw) return { items: [] };
     try {
       const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed) || !parsed.every(isCabinetItem)) {
-        return { items: [], warning: "Saved cabinet data was invalid. Nothing was overwritten; start fresh or restore your browser data." };
-      }
-      return { items: parsed };
+      if (!Array.isArray(parsed)) throw new Error();
+      const seen = new Set<string>();
+      const items = parsed.filter((value): value is CabinetItem => isCabinetItem(value) && !seen.has(value.id) && !!seen.add(value.id));
+      return items.length === parsed.length ? { items } : { items, warning: `Recovered ${items.length} valid unique cabinet records; invalid data was ignored.` };
     } catch {
       return { items: [], warning: "Saved cabinet data was invalid. Nothing was overwritten; start fresh or restore your browser data." };
     }

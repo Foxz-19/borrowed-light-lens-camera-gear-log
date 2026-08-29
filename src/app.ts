@@ -29,6 +29,7 @@ class CabinetApp implements ViewActions {
     this.items = loaded.items;
     const urlCategory = new URLSearchParams(window.location.search).get("category");
     this.filter = isCategory(urlCategory) && this.items.some(item => item.category === urlCategory) ? urlCategory : "All";
+    if (urlCategory && this.filter === "All") window.history.replaceState(null, "", window.location.pathname);
     if (loaded.warning) this.showPersistentError(loaded.warning);
     this.bindForm();
     this.bindDialog();

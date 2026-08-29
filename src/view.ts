@@ -23,9 +23,8 @@ function statusControl(item: CabinetItem, actions: ViewActions): HTMLElement {
     button.type = "button";
     button.dataset.itemId = item.id;
     button.dataset.status = status;
-    button.setAttribute("aria-label", `Mark ${item.name} as ${STATUS_LABELS[status]}`);
     button.setAttribute("aria-pressed", String(item.status === status));
-    button.title = STATUS_LABELS[status];
+    button.textContent = STATUS_LABELS[status];
     button.addEventListener("click", () => actions.onStatus(item.id, status, button));
     group.append(button);
   });
@@ -35,7 +34,7 @@ function statusControl(item: CabinetItem, actions: ViewActions): HTMLElement {
 export function createItemRow(item: CabinetItem, actions: ViewActions): HTMLElement {
   const article = element("article", "bottle-row");
   article.dataset.id = item.id;
-  const bottle = element("div", `bottle-shape bottle-${item.category.toLowerCase()}`);
+  const bottle = element("div", "bottle-shape");
   bottle.setAttribute("aria-hidden", "true");
   bottle.append(element("span", "bottle-label", item.name.slice(0, 1).toUpperCase()));
   const details = element("div", "bottle-details");
@@ -45,14 +44,12 @@ export function createItemRow(item: CabinetItem, actions: ViewActions): HTMLElem
   if (item.note) details.append(element("p", "note", item.note));
   else details.append(element("p", "note note-empty", "No tasting note"));
   const controls = element("div", "row-controls");
-  const current = element("span", `status-badge status-${item.status}`, STATUS_LABELS[item.status]);
-  current.setAttribute("aria-hidden", "true");
   const remove = element("button", "remove", "Remove") as HTMLButtonElement;
   remove.type = "button";
   remove.dataset.itemId = item.id;
   remove.setAttribute("aria-label", `Remove ${item.name}`);
   remove.addEventListener("click", () => actions.onDelete(item.id, remove));
-  controls.append(current, statusControl(item, actions), remove);
+  controls.append(statusControl(item, actions), remove);
   article.append(bottle, details, controls);
   return article;
 }
