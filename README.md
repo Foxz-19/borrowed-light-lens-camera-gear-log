@@ -1,17 +1,17 @@
-# Rewatch Reel
+# Ember
 
-A cinematic, browser-only archive for favorite movie quotes. Quotes can be added, filtered by mood, and deleted with confirmation; the collection persists in `localStorage`.
+A warm, browser-only candle burn-time estimator. It calculates from weight, unit, wick count, and diameter, then saves named candles in `localStorage`.
 
-## Run locally
+## Run
 
-Requires Node.js 22 or newer.
+Requires Node.js 22+.
 
 ```sh
 npm install
 npm run dev
 ```
 
-## Quality checks
+## Verify
 
 ```sh
 npm test
@@ -19,4 +19,4 @@ npm run typecheck
 npm run build
 ```
 
-The source is deliberately dependency-light and split into typed domain, storage, view, and controller modules. Storage payloads are runtime-validated before crossing into application state. Generated dependencies, builds, and QA captures are excluded from the submission; the raw application and test source remains below the 40KB brief limit.
+The estimate uses an 8-hour-per-ounce midpoint, reduces time by 15% per additional wick, and applies a clamped melt-pool factor relative to a 3-inch candle. Real burn time also depends on wax, fragrance, wick care, and environment.

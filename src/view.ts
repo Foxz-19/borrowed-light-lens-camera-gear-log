@@ -1,97 +1,17 @@
-import { formatDate, moodLabel } from './core.ts';
-import type { Filter, Quote } from './types.ts';
-
-const required = <T extends Element>(selector: string): T => {
-  const node = document.querySelector<T>(selector);
-  if (!node) throw new Error(`Required interface element missing: ${selector}`);
-  return node;
-};
-
-export class QuoteView {
-  readonly form = required<HTMLFormElement>('#quote-form');
-  readonly list = required<HTMLElement>('#quote-list');
-  readonly empty = required<HTMLElement>('#empty-state');
-  readonly dialog = required<HTMLDialogElement>('#delete-dialog');
-  readonly filters = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
-  private readonly archive = required<HTMLElement>('#archive');
-  private readonly loader = required<HTMLElement>('#loader');
-  private readonly formError = required<HTMLElement>('#form-error');
-  private readonly status = required<HTMLElement>('#persistent-status');
-  private readonly toast = required<HTMLElement>('#toast');
-  private toastTimer?: number;
-
-  finishLoading(): void {
-    this.loader.hidden = true;
-    this.archive.setAttribute('aria-busy', 'false');
-  }
-
-  render(quotes: Quote[], filter: Filter): void {
-    this.list.replaceChildren(...quotes.map((quote, index) => this.quoteCard(quote, index)));
-    this.list.hidden = quotes.length === 0;
-    this.empty.hidden = quotes.length > 0;
-    const filteredEmpty = filter !== 'all';
-    required('#empty-title').textContent = filteredEmpty ? `No ${moodLabel(filter)} lines yet.` : 'Your first great line belongs here.';
-    required('#empty-copy').textContent = filteredEmpty ? 'Try another mood, or add a quote for this one.' : 'Add a quote and begin your private picture-house archive.';
-  }
-
-  updateChrome(total: number, visible: number, filter: Filter): void {
-    required('#quote-count').textContent = String(total).padStart(2, '0');
-    required('#count-all').textContent = String(total);
-    required('#archive-summary').textContent = total === 0 ? 'Your reel is ready for its first line.' : filter === 'all' ? `${total} ${total === 1 ? 'line' : 'lines'}, ordered by latest.` : `${visible} of ${total} ${moodLabel(filter).toLowerCase()}.`;
-    for (const button of this.filters) button.setAttribute('aria-pressed', String(button.dataset.filter === filter));
-  }
-
-  readDraft() {
-    const data = new FormData(this.form);
-    return { text: String(data.get('quote') ?? ''), movie: String(data.get('movie') ?? ''), year: String(data.get('year') ?? ''), character: String(data.get('character') ?? ''), mood: String(data.get('mood') ?? '') };
-  }
-
-  clearForm(): void {
-    this.form.reset();
-    const firstMood = this.form.querySelector<HTMLInputElement>('input[name="mood"]');
-    if (firstMood) firstMood.checked = true;
-    this.formError.textContent = '';
-  }
-
-  showFormError(message: string): void { this.formError.textContent = message; }
-  clearFormError(): void { this.formError.textContent = ''; }
-  showPersistent(message: string): void { this.status.textContent = message; this.status.hidden = false; }
-  clearPersistent(): void { this.status.hidden = true; this.status.textContent = ''; }
-  showToast(message: string): void {
-    window.clearTimeout(this.toastTimer);
-    this.toast.textContent = message;
-    this.toast.hidden = false;
-    this.toastTimer = window.setTimeout(() => { this.toast.hidden = true; }, 3200);
-  }
-
-  confirmDelete(quote: Quote): Promise<boolean> {
-    required('#dialog-copy').textContent = `“${quote.text}” from ${quote.movie} will be permanently removed.`;
-    this.dialog.showModal();
-    return new Promise((resolve) => this.dialog.addEventListener('close', () => resolve(this.dialog.returnValue === 'confirm'), { once: true }));
-  }
-
-  focusComposer(): void {
-    required<HTMLTextAreaElement>('#quote').focus({ preventScroll: true });
-    required('#composer-title').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-  }
-
-  private quoteCard(quote: Quote, index: number): HTMLElement {
-    const article = document.createElement('article');
-    article.className = 'quote-card';
-    article.dataset.mood = quote.mood;
-    article.style.setProperty('--index', String(Math.min(index, 8)));
-    const top = document.createElement('div'); top.className = 'card-top';
-    const mood = document.createElement('span'); mood.className = 'mood'; mood.textContent = moodLabel(quote.mood);
-    const date = document.createElement('time'); date.dateTime = quote.dateAdded; date.textContent = formatDate(quote.dateAdded);
-    top.append(mood, date);
-    const text = document.createElement('blockquote'); text.textContent = `“${quote.text}”`;
-    const bottom = document.createElement('div'); bottom.className = 'card-bottom';
-    const credit = document.createElement('p');
-    const title = document.createElement('cite'); title.textContent = quote.movie;
-    credit.append(title, document.createTextNode(` · ${quote.year}`));
-    if (quote.character) { const person = document.createElement('span'); person.textContent = quote.character; credit.append(person); }
-    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'delete-button'; remove.dataset.delete = quote.id; remove.setAttribute('aria-label', `Delete quote from ${quote.movie}`); remove.textContent = 'Remove';
-    bottom.append(credit, remove); article.append(top, text, bottom);
-    return article;
-  }
+import{formatDuration,formatWeight,resultMessage}from'./core.ts';import type{Candle,CandleDraft,EstimateResult}from'./types.ts';
+const get=<T extends Element>(s:string):T=>{const n=document.querySelector<T>(s);if(!n)throw Error(`Missing interface element: ${s}`);return n};
+const make=<K extends keyof HTMLElementTagNameMap>(tag:K,text='',cls=''):HTMLElementTagNameMap[K]=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n};
+export class CandleView{
+ readonly form=get<HTMLFormElement>('#candle-form');readonly list=get<HTMLElement>('#candle-list');readonly dialog=get<HTMLDialogElement>('#delete-dialog');private timer?:number;
+ readDraft():CandleDraft{const d=new FormData(this.form);return{name:String(d.get('name')??''),weight:String(d.get('weight')??''),unit:String(d.get('unit')??''),wicks:String(d.get('wicks')??''),diameter:String(d.get('diameter')??'')}}
+ showEstimate(r:EstimateResult):void{get<HTMLButtonElement>('#save-button').disabled=!r.ok;get('#result').classList.toggle('is-ready',r.ok);get('#result-time').textContent=r.ok?formatDuration(r.value.burnMinutes):'—';get('#result-copy').textContent=r.ok?resultMessage(r.value.burnMinutes):'Complete the details to see your estimate.'}
+ render(items:Candle[]):void{this.list.replaceChildren(...items.map((c,i)=>this.card(c,i)));this.list.hidden=!items.length;get('#empty-state').toggleAttribute('hidden',!!items.length);get('#saved-count').textContent=String(items.length).padStart(2,'0');get('#collection-summary').textContent=items.length?`${items.length} ${items.length===1?'candle':'candles'}, ordered by newest.`:'Your collection lives only in this browser.'}
+ finishLoading():void{get<HTMLElement>('#loader').hidden=true;get('.collection').setAttribute('aria-busy','false')}
+ showError(v:string):void{get('#form-error').textContent=v}clearError():void{this.showError('')}
+ showPersistent(v:string):void{const n=get<HTMLElement>('#persistent-status');n.textContent=v;n.hidden=false}clearPersistent():void{get<HTMLElement>('#persistent-status').hidden=true}
+ reset():void{this.form.reset();this.clearError();this.showEstimate({ok:false,field:'name',error:''})}
+ focusForm():void{get<HTMLInputElement>('#name').focus();get('#estimator-title').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
+ showToast(v:string):void{const n=get<HTMLElement>('#toast');window.clearTimeout(this.timer);n.textContent=v;n.hidden=false;this.timer=window.setTimeout(()=>n.hidden=true,3600)}
+ confirmDelete(c:Candle):Promise<boolean>{get('#dialog-copy').textContent=`${c.name} (${formatWeight(c)}, ${c.wicks} ${c.wicks===1?'wick':'wicks'}, ${c.diameter} in) will be removed from this browser.`;this.dialog.returnValue='';this.dialog.showModal();return new Promise(resolve=>this.dialog.addEventListener('close',()=>resolve(this.dialog.returnValue==='confirm'),{once:true}))}
+ private card(c:Candle,i:number):HTMLElement{const a=make('article','','candle-item');a.style.setProperty('--i',String(Math.min(i,8)));const main=make('div'),name=make('h3',c.name),specs=make('p',`${formatWeight(c)} · ${c.wicks} ${c.wicks===1?'wick':'wicks'} · ${c.diameter} in diameter`),time=make('p','','item-duration');time.innerHTML=`<span>Estimated</span><strong>${formatDuration(c.burnMinutes)}</strong>`;const remove=make('button','Remove');remove.type='button';remove.dataset.delete=c.id;remove.setAttribute('aria-label',`Remove ${c.name}`);main.append(name,specs);a.append(main,time,remove);return a}
 }

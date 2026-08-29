@@ -1,26 +1,5 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
-import { QuoteStore, STORAGE_KEY } from '../src/storage.ts';
-import type { StorageLike } from '../src/types.ts';
-
-class MemoryStorage implements StorageLike {
-  data = new Map<string, string>();
-  failRead = false; failWrite = false;
-  getItem(key: string) { if (this.failRead) throw new Error('blocked'); return this.data.get(key) ?? null; }
-  setItem(key: string, value: string) { if (this.failWrite) throw new Error('full'); this.data.set(key, value); }
-}
-
-test('round-trips a valid archive', () => {
-  const memory = new MemoryStorage(); const store = new QuoteStore(memory);
-  const quotes = [{ id: '1', text: 'Hello', movie: 'Film', year: 2000, mood: 'iconic' as const, dateAdded: '2026-01-01T00:00:00.000Z' }];
-  assert.equal(store.save(quotes).ok, true);
-  assert.deepEqual(store.load(), { ok: true, value: quotes });
-});
-
-test('reports corrupt, blocked, and failed writes distinctly', () => {
-  const memory = new MemoryStorage(); const store = new QuoteStore(memory);
-  memory.data.set(STORAGE_KEY, '{bad');
-  const corrupt = store.load(); assert.equal(corrupt.ok, false); if (!corrupt.ok) assert.equal(corrupt.corrupt, true);
-  memory.failRead = true; const blocked = store.load(); assert.equal(blocked.ok, false); if (!blocked.ok) assert.equal(blocked.corrupt, false);
-  memory.failRead = false; memory.failWrite = true; assert.equal(store.save([]).ok, false);
-});
+import assert from'node:assert/strict';import test from'node:test';import{CandleStore,STORAGE_KEY}from'../src/storage.ts';import type{StorageLike}from'../src/types.ts';
+class Memory implements StorageLike{data=new Map<string,string>();read=false;write=false;getItem(k:string){if(this.read)throw Error();return this.data.get(k)??null}setItem(k:string,v:string){if(this.write)throw Error();this.data.set(k,v)}}
+const candle={id:'1',name:'Amber',weight:8,unit:'oz' as const,wicks:1,diameter:3,burnMinutes:3840,createdAt:'2026-08-29T00:00:00.000Z'};
+test('round-trips a collection',()=>{const m=new Memory(),s=new CandleStore(m);assert.equal(s.save([candle]).ok,true);assert.deepEqual(s.load(),{ok:true,value:[candle]})});
+test('reports corrupt, blocked, and failed writes',()=>{const m=new Memory(),s=new CandleStore(m);m.data.set(STORAGE_KEY,'{bad');let r=s.load();assert.equal(r.ok,false);if(!r.ok)assert.equal(r.corrupt,true);m.read=true;r=s.load();assert.equal(r.ok,false);if(!r.ok)assert.equal(r.corrupt,false);m.read=false;m.write=true;assert.equal(s.save([candle]).ok,false)});

@@ -1,38 +1,24 @@
-import { MOODS, type Filter, type Mood, type Quote, type QuoteDraft, type ValidationResult } from './types.ts';
-
-const clean = (value: string) => value.trim().replace(/\s+/g, ' ');
-export const isMood = (value: unknown): value is Mood => typeof value === 'string' && MOODS.includes(value as Mood);
-
-export function validateDraft(draft: QuoteDraft, currentYear = new Date().getFullYear(), existing: Quote[] = []): ValidationResult {
-  const text = clean(draft.text);
-  const movie = clean(draft.movie);
-  const character = clean(draft.character);
-  if (!text) return { ok: false, error: 'Write the quote you want to remember.' };
-  if (text.length > 300) return { ok: false, error: 'Keep the quote to 300 characters or fewer.' };
-  if (!movie) return { ok: false, error: 'Add the movie title.' };
-  if (movie.length > 80) return { ok: false, error: 'Keep the movie title to 80 characters or fewer.' };
-  if (!/^\d{4}$/.test(draft.year)) return { ok: false, error: 'Enter a four-digit release year.' };
-  const year = Number(draft.year);
-  if (year < 1888 || year > currentYear + 5) return { ok: false, error: `Enter a year between 1888 and ${currentYear + 5}.` };
-  if (character.length > 60) return { ok: false, error: 'Keep the character name to 60 characters or fewer.' };
-  if (!isMood(draft.mood)) return { ok: false, error: 'Choose a valid mood.' };
-  if (existing.some((quote) => quote.text.toLocaleLowerCase() === text.toLocaleLowerCase() && quote.movie.toLocaleLowerCase() === movie.toLocaleLowerCase() && quote.year === year)) return { ok: false, error: 'That quote is already on your reel.' };
-  return { ok: true, value: { text, movie, year, ...(character && { character }), mood: draft.mood } };
+import type{Candle,CandleDraft,EstimateResult,WeightUnit}from'./types.ts';
+const clean=(v:string)=>v.trim().replace(/\s+/g,' ');
+export const isUnit=(v:unknown):v is WeightUnit=>v==='oz'||v==='g';
+export function estimateMinutes(weight:number,unit:WeightUnit,wicks:number,diameter:number):number{
+ const oz=unit==='g'?weight/28.3495:weight,wick=.85**(wicks-1),pool=Math.min(1.3,Math.max(.7,3/diameter));
+ return Math.max(1,Math.round(oz*8*wick*pool*60));
 }
-
-export function isValidDateTime(value: string): boolean {
-  const date = new Date(value);
-  return !Number.isNaN(date.getTime()) && date.toISOString() === value;
+export function validateDraft(d:CandleDraft):EstimateResult{
+ const name=clean(d.name),weight=Number(d.weight),wicks=Number(d.wicks),diameter=Number(d.diameter);
+ if(!name)return{ok:false,field:'name',error:'Give this candle a name.'};
+ if(name.length>50)return{ok:false,field:'name',error:'Keep the name to 50 characters or fewer.'};
+ if(!isUnit(d.unit))return{ok:false,field:'unit',error:'Choose ounces or grams.'};
+ if(!Number.isFinite(weight)||weight<=0||weight>(d.unit==='g'?10000:350))return{ok:false,field:'weight',error:`Enter a weight between 0 and ${d.unit==='g'?'10,000 grams':'350 ounces'}.`};
+ if(!Number.isInteger(wicks)||wicks<1||wicks>8)return{ok:false,field:'wicks',error:'Choose between 1 and 8 wicks.'};
+ if(!Number.isFinite(diameter)||diameter<1||diameter>12)return{ok:false,field:'diameter',error:'Enter a diameter between 1 and 12 inches.'};
+ return{ok:true,value:{name,weight,unit:d.unit,wicks,diameter,burnMinutes:estimateMinutes(weight,d.unit,wicks,diameter)}};
 }
-
-export function isQuote(value: unknown): value is Quote {
-  if (!value || typeof value !== 'object') return false;
-  const quote = value as Record<string, unknown>;
-  return typeof quote.id === 'string' && quote.id.length > 0 && typeof quote.text === 'string' && quote.text.length > 0 && quote.text.length <= 300 &&
-    typeof quote.movie === 'string' && quote.movie.length > 0 && quote.movie.length <= 80 && Number.isInteger(quote.year) && Number(quote.year) >= 1888 &&
-    (quote.character === undefined || typeof quote.character === 'string') && isMood(quote.mood) && typeof quote.dateAdded === 'string' && isValidDateTime(quote.dateAdded);
+export function formatDuration(m:number):string{const h=Math.floor(m/60),r=m%60;if(!h)return`${r} ${r===1?'minute':'minutes'}`;return`${h} ${h===1?'hour':'hours'}${r?` ${r} ${r===1?'minute':'minutes'}`:''}`}
+export const resultMessage=(m:number)=>`Your candle will burn for approximately ${formatDuration(m)}.`;
+export const formatWeight=(c:Pick<Candle,'weight'|'unit'>)=>`${c.weight.toLocaleString()} ${c.unit}`;
+export function isCandle(v:unknown):v is Candle{
+ if(!v||typeof v!=='object')return false;const c=v as Record<string,unknown>;
+ return typeof c.id==='string'&&!!c.id&&typeof c.name==='string'&&!!c.name&&c.name.length<=50&&typeof c.weight==='number'&&c.weight>0&&isUnit(c.unit)&&Number.isInteger(c.wicks)&&Number(c.wicks)>=1&&Number(c.wicks)<=8&&typeof c.diameter==='number'&&c.diameter>=1&&c.diameter<=12&&Number.isInteger(c.burnMinutes)&&Number(c.burnMinutes)>0&&typeof c.createdAt==='string'&&!Number.isNaN(Date.parse(c.createdAt));
 }
-
-export const filterQuotes = (quotes: Quote[], filter: Filter) => filter === 'all' ? quotes : quotes.filter((quote) => quote.mood === filter);
-export const formatDate = (iso: string) => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(iso));
-export const moodLabel = (mood: Mood) => mood[0]!.toUpperCase() + mood.slice(1);

@@ -1,81 +1,10 @@
-import { filterQuotes, isMood, validateDraft } from './core.ts';
-import { QuoteStore } from './storage.ts';
-import type { Filter, Quote } from './types.ts';
-import { QuoteView } from './view.ts';
-
-function createId(): string {
-  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-  const bytes = new Uint32Array(4);
-  if (typeof crypto.getRandomValues === 'function') crypto.getRandomValues(bytes);
-  return `${Date.now().toString(36)}-${Array.from(bytes).map((part) => part.toString(36)).join('') || Math.random().toString(36).slice(2)}`;
+import{validateDraft}from'./core.ts';import{CandleStore}from'./storage.ts';import type{Candle}from'./types.ts';import{CandleView}from'./view.ts';
+const id=()=>typeof crypto.randomUUID==='function'?crypto.randomUUID():`${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+class CandleController{
+ private candles:Candle[]=[];constructor(private store:CandleStore,private view:CandleView){}
+ start():void{const loaded=this.store.load();this.candles=loaded.value;if(!loaded.ok)this.view.showPersistent(loaded.error);this.view.form.addEventListener('input',()=>this.preview());this.view.form.addEventListener('submit',e=>this.save(e));this.view.list.addEventListener('click',e=>void this.remove(e));document.querySelector('#empty-action')?.addEventListener('click',()=>this.view.focusForm());this.view.render(this.candles);this.preview();setTimeout(()=>this.view.finishLoading(),matchMedia('(prefers-reduced-motion: reduce)').matches?0:180)}
+ private preview():void{const r=validateDraft(this.view.readDraft());this.view.showEstimate(r);if(r.ok)this.view.clearError()}
+ private save(e:SubmitEvent):void{e.preventDefault();const r=validateDraft(this.view.readDraft());if(!r.ok){this.view.showError(r.error);document.querySelector<HTMLElement>(`[name="${r.field}"]`)?.focus();return}const candle:Candle={...r.value,id:id(),createdAt:new Date().toISOString()},before=this.candles;this.candles=[candle,...before];const saved=this.store.save(this.candles);if(!saved.ok){this.candles=before;this.view.showError(saved.error);this.view.showPersistent(saved.error)}else{this.view.clearPersistent();this.view.reset();this.view.showToast(`${candle.name} saved to your shelf.`)}this.view.render(this.candles)}
+ private async remove(e:Event):Promise<void>{const button=(e.target as Element).closest<HTMLButtonElement>('[data-delete]');if(!button)return;const candle=this.candles.find(c=>c.id===button.dataset.delete);if(!candle){this.view.showPersistent('That candle is no longer in your collection.');return}if(!await this.view.confirmDelete(candle)){button.focus();return}const before=this.candles;this.candles=this.candles.filter(c=>c.id!==candle.id);const saved=this.store.save(this.candles);if(!saved.ok){this.candles=before;this.view.showPersistent(`Candle not removed. ${saved.error}`)}else{this.view.clearPersistent();this.view.showToast(`${candle.name} removed.`)}this.view.render(this.candles)}
 }
-
-class QuoteController {
-  private quotes: Quote[] = [];
-  private filter: Filter = 'all';
-
-  constructor(private readonly store: QuoteStore, private readonly view: QuoteView) {}
-
-  start(): void {
-    const loaded = this.store.load();
-    this.quotes = loaded.value;
-    if (!loaded.ok) this.view.showPersistent(loaded.error);
-    this.bindEvents();
-    this.paint();
-    requestAnimationFrame(() => this.view.finishLoading());
-  }
-
-  private bindEvents(): void {
-    this.view.form.addEventListener('submit', (event) => this.addQuote(event));
-    this.view.form.addEventListener('input', () => this.view.clearFormError());
-    this.view.list.addEventListener('click', (event) => this.requestDelete(event));
-    for (const button of this.view.filters) button.addEventListener('click', () => {
-      const value = button.dataset.filter;
-      if (value !== 'all' && !isMood(value)) { this.view.showPersistent('That mood filter is not available.'); return; }
-      this.filter = value;
-      this.paint();
-    });
-    document.querySelector('#empty-action')?.addEventListener('click', () => this.view.focusComposer());
-  }
-
-  private addQuote(event: SubmitEvent): void {
-    event.preventDefault();
-    const result = validateDraft(this.view.readDraft(), new Date().getFullYear(), this.quotes);
-    if (!result.ok) { this.view.showFormError(result.error); return; }
-    const quote: Quote = { ...result.value, id: createId(), dateAdded: new Date().toISOString() };
-    this.quotes = [quote, ...this.quotes];
-    const saved = this.store.save(this.quotes);
-    this.filter = 'all';
-    this.view.clearForm();
-    if (!saved.ok) { this.view.showFormError(saved.error); this.view.showPersistent(saved.error); }
-    else { this.view.clearPersistent(); this.view.showToast('Quote saved to your reel.'); }
-    this.paint();
-  }
-
-  private async requestDelete(event: Event): Promise<void> {
-    const target = (event.target as Element).closest<HTMLButtonElement>('[data-delete]');
-    if (!target) return;
-    const quote = this.quotes.find((item) => item.id === target.dataset.delete);
-    if (!quote) { this.view.showPersistent('That quote is no longer in the archive.'); return; }
-    if (!await this.view.confirmDelete(quote)) { target.focus(); return; }
-    const previous = this.quotes;
-    this.quotes = this.quotes.filter((item) => item.id !== quote.id);
-    const saved = this.store.save(this.quotes);
-    if (!saved.ok) { this.quotes = previous; this.view.showPersistent(`Quote not deleted. ${saved.error}`); }
-    else { this.view.clearPersistent(); this.view.showToast('Quote removed from the reel.'); }
-    this.paint();
-  }
-
-  private paint(): void {
-    const visible = filterQuotes(this.quotes, this.filter);
-    this.view.render(visible, this.filter);
-    this.view.updateChrome(this.quotes.length, visible.length, this.filter);
-  }
-}
-
-try {
-  new QuoteController(new QuoteStore(window.localStorage), new QuoteView()).start();
-} catch (error) {
-  document.body.innerHTML = '<main class="fatal"><p class="kicker">Projection interrupted</p><h1>The archive could not open.</h1><p>Reload the page to try again. Your saved quotes have not been changed.</p></main>';
-  console.error(error);
-}
+try{new CandleController(new CandleStore(localStorage),new CandleView()).start()}catch(e){document.body.innerHTML='<main class="fatal"><p class="eyebrow">The flame went out</p><h1>Ember could not open.</h1><p>Reload to try again. Saved candles have not changed.</p></main>';console.error(e)}

@@ -1,31 +1,7 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
-import { filterQuotes, isQuote, isValidDateTime, validateDraft } from '../src/core.ts';
-import type { Quote } from '../src/types.ts';
-
-const draft = { text: '  I see you.  ', movie: ' Avatar ', year: '2009', character: ' Neytiri ', mood: 'iconic' };
-
-test('validates and normalizes a complete quote', () => {
-  assert.deepEqual(validateDraft(draft, 2026), { ok: true, value: { text: 'I see you.', movie: 'Avatar', year: 2009, character: 'Neytiri', mood: 'iconic' } });
-});
-
-test('rejects missing fields, impossible years, and unknown moods', () => {
-  assert.equal(validateDraft({ ...draft, text: '' }).ok, false);
-  assert.equal(validateDraft({ ...draft, year: '1887' }, 2026).ok, false);
-  assert.equal(validateDraft({ ...draft, mood: 'sleepy' }).ok, false);
-});
-
-test('schema guard and mood filter preserve the quote contract', () => {
-  const quote: Quote = { id: '1', text: 'Hello', movie: 'Film', year: 2000, mood: 'hilarious', dateAdded: '2026-01-01T00:00:00.000Z' };
-  assert.equal(isQuote(quote), true);
-  assert.equal(isQuote({ ...quote, dateAdded: 'nope' }), false);
-  assert.deepEqual(filterQuotes([quote], 'iconic'), []);
-  assert.deepEqual(filterQuotes([quote], 'all'), [quote]);
-});
-
-test('rejects duplicate entries and impossible persisted datetimes', () => {
-  const existing: Quote = { id: '1', text: 'Hello', movie: 'Film', year: 2000, mood: 'iconic', dateAdded: '2026-01-01T00:00:00.000Z' };
-  assert.equal(validateDraft({ text: ' hello ', movie: ' FILM ', year: '2000', character: '', mood: 'hilarious' }, 2026, [existing]).ok, false);
-  assert.equal(isValidDateTime('2026-02-31T00:00:00.000Z'), false);
-  assert.equal(isValidDateTime('2026-02-28T00:00:00.000Z'), true);
-});
+import assert from'node:assert/strict';import test from'node:test';import{estimateMinutes,formatDuration,isCandle,resultMessage,validateDraft}from'../src/core.ts';
+const draft={name:'  Dinner   glow ',weight:'12',unit:'oz',wicks:'1',diameter:'3'};
+test('normalizes and calculates the baseline',()=>assert.deepEqual(validateDraft(draft),{ok:true,value:{name:'Dinner glow',weight:12,unit:'oz',wicks:1,diameter:3,burnMinutes:5760}}));
+test('converts units and adjusts burn factors',()=>{assert.equal(estimateMinutes(283.495,'g',1,3),4800);assert.ok(estimateMinutes(10,'oz',2,3)<estimateMinutes(10,'oz',1,3));assert.ok(estimateMinutes(10,'oz',1,6)<estimateMinutes(10,'oz',1,3))});
+test('rejects invalid values',()=>{for(const patch of[{name:''},{weight:'-1'},{wicks:'1.5'},{diameter:'13'},{unit:'kg'}])assert.equal(validateDraft({...draft,...patch}).ok,false)});
+test('formats accessible result copy',()=>{assert.equal(formatDuration(260),'4 hours 20 minutes');assert.equal(formatDuration(60),'1 hour');assert.equal(resultMessage(260),'Your candle will burn for approximately 4 hours 20 minutes.')});
+test('guards persisted data at runtime',()=>{const c={id:'1',name:'Amber',weight:8,unit:'oz',wicks:1,diameter:3,burnMinutes:3840,createdAt:'2026-08-29T00:00:00.000Z'};assert.equal(isCandle(c),true);assert.equal(isCandle({...c,wicks:0}),false);assert.equal(isCandle({...c,createdAt:'bad'}),false)});
