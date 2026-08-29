@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { filterQuotes, isQuote, validateDraft } from '../src/core.ts';
+import { filterQuotes, isQuote, isValidDateTime, validateDraft } from '../src/core.ts';
 import type { Quote } from '../src/types.ts';
 
 const draft = { text: '  I see you.  ', movie: ' Avatar ', year: '2009', character: ' Neytiri ', mood: 'iconic' };
@@ -21,4 +21,11 @@ test('schema guard and mood filter preserve the quote contract', () => {
   assert.equal(isQuote({ ...quote, dateAdded: 'nope' }), false);
   assert.deepEqual(filterQuotes([quote], 'iconic'), []);
   assert.deepEqual(filterQuotes([quote], 'all'), [quote]);
+});
+
+test('rejects duplicate entries and impossible persisted datetimes', () => {
+  const existing: Quote = { id: '1', text: 'Hello', movie: 'Film', year: 2000, mood: 'iconic', dateAdded: '2026-01-01T00:00:00.000Z' };
+  assert.equal(validateDraft({ text: ' hello ', movie: ' FILM ', year: '2000', character: '', mood: 'hilarious' }, 2026, [existing]).ok, false);
+  assert.equal(isValidDateTime('2026-02-31T00:00:00.000Z'), false);
+  assert.equal(isValidDateTime('2026-02-28T00:00:00.000Z'), true);
 });

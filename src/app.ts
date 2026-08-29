@@ -3,6 +3,13 @@ import { QuoteStore } from './storage.ts';
 import type { Filter, Quote } from './types.ts';
 import { QuoteView } from './view.ts';
 
+function createId(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = new Uint32Array(4);
+  if (typeof crypto.getRandomValues === 'function') crypto.getRandomValues(bytes);
+  return `${Date.now().toString(36)}-${Array.from(bytes).map((part) => part.toString(36)).join('') || Math.random().toString(36).slice(2)}`;
+}
+
 class QuoteController {
   private quotes: Quote[] = [];
   private filter: Filter = 'all';
@@ -33,9 +40,9 @@ class QuoteController {
 
   private addQuote(event: SubmitEvent): void {
     event.preventDefault();
-    const result = validateDraft(this.view.readDraft());
+    const result = validateDraft(this.view.readDraft(), new Date().getFullYear(), this.quotes);
     if (!result.ok) { this.view.showFormError(result.error); return; }
-    const quote: Quote = { ...result.value, id: crypto.randomUUID(), dateAdded: new Date().toISOString() };
+    const quote: Quote = { ...result.value, id: createId(), dateAdded: new Date().toISOString() };
     this.quotes = [quote, ...this.quotes];
     const saved = this.store.save(this.quotes);
     this.filter = 'all';

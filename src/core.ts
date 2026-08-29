@@ -3,7 +3,7 @@ import { MOODS, type Filter, type Mood, type Quote, type QuoteDraft, type Valida
 const clean = (value: string) => value.trim().replace(/\s+/g, ' ');
 export const isMood = (value: unknown): value is Mood => typeof value === 'string' && MOODS.includes(value as Mood);
 
-export function validateDraft(draft: QuoteDraft, currentYear = new Date().getFullYear()): ValidationResult {
+export function validateDraft(draft: QuoteDraft, currentYear = new Date().getFullYear(), existing: Quote[] = []): ValidationResult {
   const text = clean(draft.text);
   const movie = clean(draft.movie);
   const character = clean(draft.character);
@@ -16,7 +16,13 @@ export function validateDraft(draft: QuoteDraft, currentYear = new Date().getFul
   if (year < 1888 || year > currentYear + 5) return { ok: false, error: `Enter a year between 1888 and ${currentYear + 5}.` };
   if (character.length > 60) return { ok: false, error: 'Keep the character name to 60 characters or fewer.' };
   if (!isMood(draft.mood)) return { ok: false, error: 'Choose a valid mood.' };
+  if (existing.some((quote) => quote.text.toLocaleLowerCase() === text.toLocaleLowerCase() && quote.movie.toLocaleLowerCase() === movie.toLocaleLowerCase() && quote.year === year)) return { ok: false, error: 'That quote is already on your reel.' };
   return { ok: true, value: { text, movie, year, ...(character && { character }), mood: draft.mood } };
+}
+
+export function isValidDateTime(value: string): boolean {
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.toISOString() === value;
 }
 
 export function isQuote(value: unknown): value is Quote {
@@ -24,7 +30,7 @@ export function isQuote(value: unknown): value is Quote {
   const quote = value as Record<string, unknown>;
   return typeof quote.id === 'string' && quote.id.length > 0 && typeof quote.text === 'string' && quote.text.length > 0 && quote.text.length <= 300 &&
     typeof quote.movie === 'string' && quote.movie.length > 0 && quote.movie.length <= 80 && Number.isInteger(quote.year) && Number(quote.year) >= 1888 &&
-    (quote.character === undefined || typeof quote.character === 'string') && isMood(quote.mood) && typeof quote.dateAdded === 'string' && !Number.isNaN(Date.parse(quote.dateAdded));
+    (quote.character === undefined || typeof quote.character === 'string') && isMood(quote.mood) && typeof quote.dateAdded === 'string' && isValidDateTime(quote.dateAdded);
 }
 
 export const filterQuotes = (quotes: Quote[], filter: Filter) => filter === 'all' ? quotes : quotes.filter((quote) => quote.mood === filter);
