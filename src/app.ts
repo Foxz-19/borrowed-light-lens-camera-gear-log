@@ -27,12 +27,19 @@ class CabinetApp implements ViewActions {
   start(): void {
     const loaded = this.store.load();
     this.items = loaded.items;
+    const urlCategory = new URLSearchParams(window.location.search).get("category");
+    this.filter = isCategory(urlCategory) && this.items.some(item => item.category === urlCategory) ? urlCategory : "All";
     if (loaded.warning) this.showPersistentError(loaded.warning);
     this.bindForm();
     this.bindDialog();
     byId("today").textContent = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date());
     byId("loading").hidden = true;
     this.inventory.setAttribute("aria-busy", "false");
+    window.addEventListener("popstate", () => {
+      const category = new URLSearchParams(window.location.search).get("category");
+      this.filter = isCategory(category) ? category : "All";
+      this.render();
+    });
     this.render();
   }
 
@@ -119,8 +126,15 @@ class CabinetApp implements ViewActions {
 
   private render(): void {
     renderSummary(this.summary, summarize(this.items));
-    renderFilters(this.filters, this.filter, categoriesIn(this.items), value => { this.filter = value; this.render(); });
+    renderFilters(this.filters, this.filter, categoriesIn(this.items), value => this.setFilter(value));
     renderInventory(this.inventory, this.items, this, this.filter);
+  }
+
+  private setFilter(value: Category | "All"): void {
+    this.filter = value;
+    const query = value === "All" ? "" : `?category=${encodeURIComponent(value)}`;
+    window.history.replaceState(null, "", `${window.location.pathname}${query}`);
+    this.render();
   }
 
   private clearFormErrors(): void {
