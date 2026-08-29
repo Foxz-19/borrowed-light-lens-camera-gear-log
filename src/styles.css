@@ -26,7 +26,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; overflow-x: hidden; background: var(--ink); color: var(--cream); font: 400 1rem/1.5 var(--font-body); }
-button, input, select, textarea { font: inherit; touch-action: manipulation; }
+button, input, select, textarea { font: inherit; touch-action: manipulation; -webkit-tap-highlight-color: #d89a4640; }
 button, select { cursor: pointer; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--amber-bright); outline-offset: 3px; }
 [hidden] { display: none !important; }
@@ -89,7 +89,7 @@ select option { background: var(--panel); }
 .shelf-rule::before { content: "Shelf No. 01"; }
 .shelf-rule span { height: 1px; flex: 1; margin-left: var(--s-3); background: linear-gradient(90deg, var(--line), transparent); }
 .inventory { min-height: 300px; }
-.bottle-row { position: relative; display: grid; grid-template-columns: 68px minmax(140px, 1fr) auto; align-items: center; gap: var(--s-4); min-height: 128px; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); animation: shelf-in .55s var(--ease) both; }
+.bottle-row { position: relative; display: grid; grid-template-columns: 68px minmax(140px, 1fr) auto; align-items: center; gap: var(--s-4); min-height: 128px; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); content-visibility: auto; contain-intrinsic-size: 128px; animation: shelf-in .55s var(--ease) both; }
 @keyframes shelf-in { from { opacity: 0; transform: translateY(14px); } }
 .bottle-shape { position: relative; justify-self: center; width: 38px; height: 74px; border: 1px solid #a36f38; border-radius: 7px 7px 4px 4px; display: grid; place-items: center; background: linear-gradient(90deg, #302113, #75471f 48%, #2c1c10); box-shadow: inset 7px 0 12px #ffffff0b, 8px 8px 20px #0005; transition: transform .3s var(--ease); }
 .bottle-shape::before { content: ""; position: absolute; top: -15px; width: 16px; height: 15px; border: 1px solid #8d6237; border-bottom: 0; background: #4e321b; }
@@ -128,7 +128,7 @@ dialog h2 { margin: 0; font: 2rem var(--font-display); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-5); }
 .secondary, .danger { border: 1px solid var(--line); padding: .65rem .9rem; background: transparent; color: var(--cream); }
 .danger { border-color: var(--red); background: #572b25; }
-.toast { position: fixed; right: var(--s-4); bottom: var(--s-4); z-index: 10; max-width: min(360px, calc(100% - 3rem)); padding: .8rem var(--s-3); border-left: 3px solid var(--green); background: #e9dfcf; color: #211911; font-size: .8rem; box-shadow: 0 12px 35px #0007; animation: toast-in .3s var(--ease); }
+.toast { position: fixed; right: max(var(--s-4), env(safe-area-inset-right)); bottom: max(var(--s-4), env(safe-area-inset-bottom)); z-index: 10; max-width: min(360px, calc(100% - 3rem)); padding: .8rem var(--s-3); border-left: 3px solid var(--green); background: #e9dfcf; color: #211911; font-size: .8rem; box-shadow: 0 12px 35px #0007; animation: toast-in .3s var(--ease); }
 .toast-error { border-color: var(--red); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } }
 
