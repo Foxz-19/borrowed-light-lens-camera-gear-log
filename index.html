@@ -1,34 +1,99 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Leftovers — Fridge label maker</title><link rel="icon" href="./favicon.svg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0b0c">
+  <meta name="description" content="A private, cinematic archive for the movie lines you never want to forget.">
+  <title>Rewatch Reel — Movie quote archive</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Libre+Caslon+Display&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./src/styles.css">
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="#labels" aria-label="Leftovers home"><span>LEFT</span><b>OVERS</b></a><p><span id="label-count">0</span> labels in the fridge</p></header>
-  <main id="app" aria-busy="true">
-    <section class="intro" aria-labelledby="title"><p class="eyebrow">A little clarity for the cold stuff</p><h1 id="title">What’s in<br>the boxes?</h1><p>Give every leftover a name, a date, and a fighting chance.</p></section>
-    <section class="workspace" aria-label="Fridge label maker">
-      <aside class="form-panel" aria-labelledby="form-title">
-        <div class="form-sticky"><p class="eyebrow">Make a label</p><h2 id="form-title">Save a leftover</h2>
-          <form id="label-form" novalidate>
-            <label for="food">Food name <span aria-hidden="true">*</span></label><input id="food" name="food" maxlength="52" placeholder="e.g. Sunday roast" autocomplete="off" required>
-            <label for="stored">Stored on</label><input id="stored" name="stored" type="date" required>
-            <label for="note">Note <small>(optional)</small></label><textarea id="note" name="note" maxlength="120" rows="3" placeholder="Reheat at 350°F…"></textarea>
-            <p id="form-error" class="form-error" aria-live="assertive"></p><button class="primary" type="submit">Add label <span aria-hidden="true">↗</span></button>
+  <a class="skip-link" href="#archive">Skip to quote archive</a>
+  <header class="marquee">
+    <a class="brand" href="#top" aria-label="Rewatch Reel home"><span class="brand-mark" aria-hidden="true">R</span><span>Rewatch<br>Reel</span></a>
+    <p class="marquee-note">A private collection of<br>lines worth replaying.</p>
+    <p class="reel-count"><strong id="quote-count">0</strong><span>quotes<br>on reel</span></p>
+  </header>
+
+  <main id="top">
+    <section class="title-frame" aria-labelledby="page-title">
+      <div class="frame-number" aria-hidden="true">01 — 24</div>
+      <div>
+        <p class="kicker">Your personal picture house</p>
+        <h1 id="page-title">Keep the lines<br><em>that keep you.</em></h1>
+      </div>
+      <p class="title-copy">Save the words that made the room go still, then find them again by feeling.</p>
+    </section>
+
+    <div class="workspace">
+      <aside class="composer" aria-labelledby="composer-title">
+        <div class="composer-sticky">
+          <p class="kicker">Add to the reel</p>
+          <h2 id="composer-title">A line to remember</h2>
+          <form id="quote-form" novalidate>
+            <label for="quote">Quote <span aria-hidden="true">*</span></label>
+            <textarea id="quote" name="quote" rows="4" maxlength="300" placeholder="The words, exactly as you remember them…" required></textarea>
+            <div class="field-row">
+              <div><label for="movie">Movie <span aria-hidden="true">*</span></label><input id="movie" name="movie" maxlength="80" placeholder="Moonlight" required></div>
+              <div class="year-field"><label for="year">Year <span aria-hidden="true">*</span></label><input id="year" name="year" inputmode="numeric" maxlength="4" placeholder="2016" required></div>
+            </div>
+            <label for="character">Character <span class="optional">Optional</span></label>
+            <input id="character" name="character" maxlength="60" placeholder="Juan">
+            <fieldset>
+              <legend>Mood <span aria-hidden="true">*</span></legend>
+              <div class="mood-options">
+                <label><input type="radio" name="mood" value="motivating" checked><span>Motivating</span></label>
+                <label><input type="radio" name="mood" value="hilarious"><span>Hilarious</span></label>
+                <label><input type="radio" name="mood" value="heartbreaking"><span>Heartbreaking</span></label>
+                <label><input type="radio" name="mood" value="iconic"><span>Iconic</span></label>
+              </div>
+            </fieldset>
+            <p id="form-error" class="form-error" role="alert"></p>
+            <button class="primary" type="submit"><span>Save quote</span><span aria-hidden="true">↗</span></button>
           </form>
         </div>
       </aside>
-      <section id="labels" class="labels-panel" aria-labelledby="labels-title"><div class="section-head"><div><p class="eyebrow">The fridge door</p><h2 id="labels-title">Your leftovers</h2></div><span id="today" class="today"></span></div>
-        <div id="loader" class="loader" role="status"><span></span>Checking the fridge…</div>
-        <div id="label-grid" class="label-grid" hidden></div>
-        <div id="empty" class="empty" hidden><span class="empty-icon" aria-hidden="true">✦</span><h3>Nothing labelled yet.</h3><p>Add a container so future-you knows what’s for dinner.</p></div>
+
+      <section id="archive" class="archive" aria-labelledby="archive-title" aria-busy="true">
+        <div class="archive-heading">
+          <div><p class="kicker">The archive</p><h2 id="archive-title">Saved scenes</h2></div>
+          <p id="archive-summary">Every feeling, in one reel.</p>
+        </div>
+        <div class="filters" role="group" aria-label="Filter quotes by mood">
+          <button type="button" data-filter="all" aria-pressed="true">All <span id="count-all">0</span></button>
+          <button type="button" data-filter="motivating" aria-pressed="false">Motivating</button>
+          <button type="button" data-filter="hilarious" aria-pressed="false">Hilarious</button>
+          <button type="button" data-filter="heartbreaking" aria-pressed="false">Heartbreaking</button>
+          <button type="button" data-filter="iconic" aria-pressed="false">Iconic</button>
+        </div>
+        <div id="loader" class="loader" role="status"><span></span>Opening the archive…</div>
+        <div id="quote-list" class="quote-list" aria-live="polite" hidden></div>
+        <div id="empty-state" class="empty-state" hidden>
+          <span class="empty-reel" aria-hidden="true">◎</span>
+          <p class="kicker">Nothing on this reel</p>
+          <h3 id="empty-title">Your first great line belongs here.</h3>
+          <p id="empty-copy">Add a quote and begin your private picture-house archive.</p>
+          <button id="empty-action" type="button">Add a quote</button>
+        </div>
         <p id="persistent-status" class="persistent-status" role="alert" hidden></p>
       </section>
-    </section>
+    </div>
   </main>
-  <dialog id="delete-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-copy"><form method="dialog"><p class="eyebrow">Clear this label?</p><h2 id="dialog-title">Make room in the fridge</h2><p id="dialog-copy"></p><div class="dialog-actions"><button value="cancel">Keep it</button><button class="danger" value="confirm">Delete</button></div></form></dialog>
+
+  <dialog id="delete-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-copy">
+    <form method="dialog">
+      <p class="kicker">Remove from reel?</p>
+      <h2 id="dialog-title">Let this line go</h2>
+      <p id="dialog-copy"></p>
+      <div class="dialog-actions"><button value="cancel">Keep quote</button><button class="danger" value="confirm">Delete quote</button></div>
+    </form>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="./src/app.js"></script>
-</body></html>
+  <script type="module" src="/src/app.ts"></script>
+</body>
+</html>

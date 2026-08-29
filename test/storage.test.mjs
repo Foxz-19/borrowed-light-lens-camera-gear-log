@@ -1,4 +1,0 @@
-import test from 'node:test'; import assert from 'node:assert/strict'; import { loadLabels, saveLabels } from '../src/storage.js';
-const store = (value = null) => ({value,getItem(){return this.value},setItem(_k,v){this.value=v},removeItem(){this.value=null}});
-test('labels persist and recover from corrupt data with a visible error', () => { const s=store(); const labels=[{id:'1',food:'Rice',stored:'2026-08-28',note:''}]; assert.equal(saveLabels(s,labels),null); assert.deepEqual(loadLabels(s).labels,labels); const bad=loadLabels(store('{oops')); assert.deepEqual(bad.labels,[]); assert.match(bad.error,/damaged/); });
-test('blocked storage reports read and write errors', () => { const s={getItem(){throw Error()},setItem(){throw Error()},removeItem(){}}; assert.match(loadLabels(s).error,/blocked/); assert.match(saveLabels(s,[]),/could not be saved/); });
