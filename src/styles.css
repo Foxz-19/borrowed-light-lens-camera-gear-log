@@ -21,10 +21,11 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; color: var(--ink); background-color: var(--paper); background-image: radial-gradient(rgba(67, 52, 35, .07) .6px, transparent .8px); background-size: 5px 5px; font-family: var(--mono); }
-button, input, select, textarea { color: inherit; font: inherit; }
-button { cursor: pointer; }
+html { color-scheme: light; scroll-behavior: smooth; }
+body { margin: 0; overflow-x: hidden; color: var(--ink); background-color: var(--paper); background-image: radial-gradient(rgba(67, 52, 35, .07) .6px, transparent .8px); background-size: 5px 5px; font-family: var(--mono); }
+button, input, select, textarea { color: inherit; font: inherit; touch-action: manipulation; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+h1, h2, h3 { text-wrap: balance; scroll-margin-top: 100px; }
 .skip-link { position: fixed; z-index: 50; top: var(--s2); left: var(--s2); padding: var(--s2) var(--s3); color: var(--white); background: var(--ink); transform: translateY(-150%); }
 .skip-link:focus { transform: none; }
 .boot { min-height: 100svh; display: grid; place-content: center; justify-items: center; gap: var(--s3); }
@@ -46,8 +47,10 @@ button { cursor: pointer; }
 form { display: grid; gap: var(--s3); margin-top: var(--s5); }
 label { display: grid; gap: var(--s1); color: var(--ink-soft); font-size: .67rem; letter-spacing: .07em; text-transform: uppercase; }
 input, select, textarea { width: 100%; min-height: 42px; border: 0; border-bottom: 1px solid var(--ink-soft); border-radius: 0; padding: .55rem 0; outline: none; background: transparent; font-size: .82rem; letter-spacing: 0; text-transform: none; }
+select { color: var(--ink); background-color: var(--paper); }
 textarea { resize: vertical; }
-input:focus, select:focus, textarea:focus { border-color: var(--rust); box-shadow: 0 2px 0 var(--rust); }
+input:focus, select:focus, textarea:focus { border-color: var(--rust); }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--rust); outline-offset: 3px; box-shadow: 0 2px 0 var(--rust); }
 .field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
 .loan-toggle { display: flex; align-items: center; gap: var(--s2); padding: var(--s2); border: 1px solid var(--line); color: var(--ink); }
 .loan-toggle input { width: 18px; min-height: 18px; accent-color: var(--olive-deep); }
@@ -70,13 +73,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--rust); box-shado
 .summary div { min-width: 140px; padding: var(--s3) clamp(var(--s3), 3vw, var(--s5)) var(--s3) 0; }
 .summary div + div { padding-left: clamp(var(--s3), 3vw, var(--s5)); border-left: 1px solid var(--line); }
 .summary dt { color: var(--ink-soft); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; }
-.summary dd { margin: var(--s1) 0 0; font: 600 2.4rem/1 var(--serif); }
+.summary dd { margin: var(--s1) 0 0; font: 600 2.4rem/1 var(--serif); font-variant-numeric: tabular-nums; }
 .filters { display: grid; grid-template-columns: 1.5fr 1fr 1fr auto; gap: var(--s3); align-items: end; margin: var(--s5) 0 var(--s4); }
 .filters label span { height: 14px; }
 .clear-filter { height: 42px; border: 0; border-bottom: 1px solid var(--line); color: var(--ink-soft); background: transparent; font-size: .68rem; text-transform: uppercase; }
 .result-count { color: var(--ink-soft); font-size: .65rem; text-align: right; }
 .gear-grid { display: grid; grid-template-columns: repeat(3, minmax(210px, 1fr)); gap: var(--s3); }
-.gear-card { display: flex; min-height: 410px; flex-direction: column; position: relative; overflow: hidden; border: 1px solid var(--line); background: rgba(251, 248, 241, .56); animation: reveal .45s both; animation-delay: calc(var(--order) * 55ms); transition: transform .2s ease, background-color .2s ease; }
+.gear-card { display: flex; min-height: 410px; flex-direction: column; position: relative; overflow: hidden; border: 1px solid var(--line); background: rgba(251, 248, 241, .56); animation: reveal .45s both; animation-delay: calc(var(--order) * 55ms); content-visibility: auto; contain-intrinsic-size: 410px; transition: transform .2s ease, background-color .2s ease; }
 .gear-card:hover { z-index: 1; background: var(--white); transform: translateY(-4px) rotate(-.25deg); }
 @keyframes reveal { from { opacity: 0; transform: translateY(12px); } }
 .gear-card__top, .gear-card footer { display: flex; justify-content: space-between; align-items: center; padding: var(--s2) var(--s3); font-size: .58rem; letter-spacing: .07em; }
@@ -106,9 +109,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--rust); box-shado
 .fatal > p:not(.kicker) { max-width: 55ch; color: var(--ink-soft); line-height: 1.6; }
 .storage-warning { position: fixed; z-index: 40; inset: auto var(--s3) var(--s3); display: grid; grid-template-columns: auto 1fr auto; gap: var(--s2); align-items: center; padding: var(--s3); color: var(--white); background: var(--rust); box-shadow: var(--shadow); font-size: .72rem; }
 .storage-warning button { border: 0; color: inherit; background: transparent; font-size: 1.2rem; }
-.toast { position: fixed; z-index: 45; top: 96px; right: var(--s3); max-width: 360px; padding: var(--s3) var(--s4); color: var(--white); background: var(--olive-deep); box-shadow: var(--shadow); font-size: .72rem; transform: translateY(-20px); opacity: 0; pointer-events: none; transition: .2s ease; }
+.toast { position: fixed; z-index: 45; top: 96px; right: var(--s3); max-width: 360px; padding: var(--s3) var(--s4); color: var(--white); background: var(--olive-deep); box-shadow: var(--shadow); font-size: .72rem; transform: translateY(-20px); opacity: 0; pointer-events: none; transition: transform .2s ease, opacity .2s ease; }
 .toast.is-visible { transform: none; opacity: 1; }
-dialog { width: min(500px, calc(100% - 2rem)); border: 0; padding: clamp(var(--s4), 5vw, var(--s6)); color: var(--ink); background: var(--paper); box-shadow: var(--shadow); }
+dialog { width: min(500px, calc(100% - 2rem)); max-height: calc(100svh - 2rem); overflow: auto; overscroll-behavior: contain; border: 0; padding: clamp(var(--s4), 5vw, var(--s6)); color: var(--ink); background: var(--paper); box-shadow: var(--shadow); }
 dialog::backdrop { background: rgba(36, 32, 27, .72); backdrop-filter: blur(3px); }
 dialog h2 { margin: var(--s2) 0; font: 600 2.5rem/1 var(--serif); }
 dialog p:not(.kicker) { color: var(--ink-soft); line-height: 1.55; }

@@ -16,6 +16,27 @@ let editingId: string | null = null;
 let pendingDeleteId: string | null = null;
 let persistentWarning: string | null = null;
 let toastTimer = 0;
+let formDirty = false;
+
+function readFiltersFromUrl(): Filters {
+  const params = new URLSearchParams(window.location.search);
+  const category = params.get("category");
+  const loan = params.get("loan");
+  return {
+    category: category === "all" || CATEGORIES.includes(category as Category) ? (category as Filters["category"] ?? "all") : "all",
+    loan: loan === "available" || loan === "lent" ? loan : "all",
+    query: params.get("q") ?? "",
+  };
+}
+
+function syncFiltersToUrl(): void {
+  const params = new URLSearchParams();
+  if (filters.category !== "all") params.set("category", filters.category);
+  if (filters.loan !== "all") params.set("loan", filters.loan);
+  if (filters.query.trim()) params.set("q", filters.query.trim());
+  const query = params.toString();
+  window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+}
 
 function readDraft(form: HTMLFormElement): GearDraft {
   const data = new FormData(form);
@@ -109,6 +130,7 @@ function handleSubmit(event: SubmitEvent): void {
   const message = editingId ? "Field entry updated." : "Gear added to the catalog.";
   draft = emptyDraft();
   editingId = null;
+  formDirty = false;
   errors = {};
   renderShell();
   persist(message);
@@ -117,6 +139,7 @@ function handleSubmit(event: SubmitEvent): void {
 
 function handleFormInput(event: Event): void {
   const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+  formDirty = true;
   if (target.name === "isLent" && target instanceof HTMLInputElement) {
     const borrower = document.querySelector<HTMLElement>(".borrower-field");
     borrower?.classList.toggle("is-visible", target.checked);
@@ -139,6 +162,7 @@ function beginEdit(id: string): void {
   }
   draft = { name: item.name, category: item.category, condition: item.condition, isLent: item.isLent, borrower: item.borrower, note: item.note, dateAdded: item.dateAdded };
   editingId = id;
+  formDirty = false;
   errors = {};
   renderShell();
   document.querySelector<HTMLInputElement>("[name=name]")?.focus();
@@ -154,7 +178,6 @@ function openDeleteDialog(id: string, trigger: HTMLButtonElement): void {
   const copy = dialog.querySelector<HTMLElement>("[data-delete-copy]");
   if (copy) copy.textContent = `“${item.name}” will be permanently removed. This affects exactly one catalog entry.`;
   dialog.showModal();
-  trigger.setAttribute("data-dialog-trigger", "true");
 }
 
 function handleDialogClose(event: Event): void {
@@ -165,7 +188,7 @@ function handleDialogClose(event: Event): void {
     const item = items.find((entry) => entry.id === id);
     if (item) {
       items = items.filter((entry) => entry.id !== id);
-      if (editingId === id) { editingId = null; draft = emptyDraft(); }
+      if (editingId === id) { editingId = null; draft = emptyDraft(); formDirty = false; }
       renderShell();
       persist(`“${item.name}” was removed.`);
       document.querySelector<HTMLElement>("#catalog-title")?.focus({ preventScroll: true });
@@ -177,6 +200,7 @@ function updateFilters(target: HTMLInputElement | HTMLSelectElement): void {
   if (target.name === "query-filter") filters.query = target.value;
   if (target.name === "category-filter" && (target.value === "all" || CATEGORIES.includes(target.value as Category))) filters.category = target.value as Filters["category"];
   if (target.name === "loan-filter" && ["all", "available", "lent"].includes(target.value)) filters.loan = target.value as LoanFilter;
+  syncFiltersToUrl();
   renderCatalog();
 }
 
@@ -188,8 +212,8 @@ function handleAction(event: MouseEvent): void {
   if (action === "edit" && id) beginEdit(id);
   if (action === "delete" && id) openDeleteDialog(id, button);
   if (action === "focus-form") document.querySelector<HTMLInputElement>("[name=name]")?.focus();
-  if (action === "cancel-edit") { editingId = null; draft = emptyDraft(); errors = {}; renderShell(); }
-  if (action === "clear-filters") { filters = { category: "all", loan: "all", query: "" }; renderShell(); }
+  if (action === "cancel-edit") { editingId = null; draft = emptyDraft(); errors = {}; formDirty = false; renderShell(); }
+  if (action === "clear-filters") { filters = { category: "all", loan: "all", query: "" }; syncFiltersToUrl(); renderShell(); }
 }
 
 function bindEvents(): void {
@@ -202,14 +226,22 @@ function reducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function warnBeforeUnload(event: BeforeUnloadEvent): void {
+  if (!formDirty) return;
+  event.preventDefault();
+  event.returnValue = "";
+}
+
 document.addEventListener("click", handleAction);
 document.addEventListener("input", function handleFilterInput(event) {
   const target = event.target as HTMLInputElement | HTMLSelectElement;
   if (target.name.endsWith("-filter")) updateFilters(target);
 });
+window.addEventListener("beforeunload", warnBeforeUnload);
 
 function initialize(): void {
   try {
+    filters = readFiltersFromUrl();
     const loaded = loadItems();
     items = loaded.items;
     persistentWarning = loaded.warning;
