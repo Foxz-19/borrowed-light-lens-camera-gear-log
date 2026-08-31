@@ -1,18 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { isCabinetItem, summarize, validateNewItem } from "../src/domain";
-import type { CabinetItem } from "../src/types";
-const bottle: CabinetItem = { id: "a", name: "Rye", category: "Whiskey", note: "Spicy", status: "in-stock", createdAt: 1 };
-describe("cabinet domain", () => {
-  it("normalizes and validates a new item", () => {
-    const result = validateNewItem({ name: "  Campari ", category: "Liqueur", note: " Bitter orange ", status: "running-low" }, "id", 10);
-    expect(result.item).toEqual({ id: "id", name: "Campari", category: "Liqueur", note: "Bitter orange", status: "running-low", createdAt: 10 });
+import { filterItems, getSummary, validateDraft } from "../src/domain";
+import type { GearDraft, GearItem } from "../src/types";
+
+const draft: GearDraft = { name: "Nikon F3", category: "Camera body", condition: "Good", isLent: false, borrower: "", note: "Meter runs a little hot", dateAdded: "2026-08-31" };
+const items: GearItem[] = [
+  { ...draft, id: "1" },
+  { ...draft, id: "2", name: "50mm Summicron", category: "Lens", isLent: true, borrower: "Mara" },
+];
+
+describe("gear domain", () => {
+  it("requires a name and borrower only when lent", () => {
+    expect(validateDraft({ ...draft, name: "" }).errors.name).toBeTruthy();
+    expect(validateDraft({ ...draft, isLent: true }).errors.borrower).toBeTruthy();
+    expect(validateDraft(draft).valid).toBe(true);
   });
-  it("rejects missing names and invalid boundary values", () => {
-    const result = validateNewItem({ name: " ", category: "Paint", note: "", status: "maybe" });
-    expect(Object.keys(result.errors)).toEqual(["name", "category", "status"]);
-    expect(isCabinetItem({ ...bottle, category: "Paint" })).toBe(false);
+
+  it("calculates all summary states", () => {
+    expect(getSummary(items)).toEqual({ total: 2, lent: 1, available: 1 });
   });
-  it("calculates every stock state", () => {
-    expect(summarize([bottle, { ...bottle, id: "b", status: "running-low" }, { ...bottle, id: "c", status: "out" }])).toEqual({ total: 3, inStock: 1, runningLow: 1, out: 1 });
+
+  it("combines category, loan, and text filters", () => {
+    expect(filterItems(items, { category: "Lens", loan: "lent", query: "mara" }).map((item) => item.id)).toEqual(["2"]);
+    expect(filterItems(items, { category: "all", loan: "available", query: "" })).toHaveLength(1);
   });
 });

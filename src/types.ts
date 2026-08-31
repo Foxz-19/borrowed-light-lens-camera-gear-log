@@ -1,33 +1,35 @@
-export const CATEGORIES = ["Whiskey", "Gin", "Rum", "Tequila", "Brandy", "Liqueur", "Bitters", "Mixer", "Garnish", "Other"] as const;
-export const STATUSES = ["in-stock", "running-low", "out"] as const;
+export const CATEGORIES = ["Camera body", "Lens", "Filter", "Accessory", "Lighting", "Other"] as const;
+export const CONDITIONS = ["Mint", "Good", "Worn"] as const;
 
-export type Category = typeof CATEGORIES[number];
-export type StockStatus = typeof STATUSES[number];
+export type Category = (typeof CATEGORIES)[number];
+export type Condition = (typeof CONDITIONS)[number];
+export type LoanFilter = "all" | "available" | "lent";
 
-export interface CabinetItem {
+export interface GearItem {
   id: string;
   name: string;
   category: Category;
+  condition: Condition;
+  isLent: boolean;
+  borrower: string;
   note: string;
-  status: StockStatus;
-  createdAt: number;
+  dateAdded: string;
 }
 
-export interface CabinetSummary {
-  total: number;
-  inStock: number;
-  runningLow: number;
-  out: number;
+export interface GearDraft extends Omit<GearItem, "id"> {}
+
+export interface Filters {
+  category: Category | "all";
+  loan: LoanFilter;
+  query: string;
 }
 
-export interface NewItemInput {
-  name: string;
-  category: string;
-  note: string;
-  status: string;
+export interface LoadResult {
+  items: GearItem[];
+  warning: string | null;
 }
 
 export interface ValidationResult {
-  item?: CabinetItem;
-  errors: Partial<Record<"name" | "category" | "status", string>>;
+  valid: boolean;
+  errors: Partial<Record<keyof GearDraft, string>>;
 }

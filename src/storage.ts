@@ -1,46 +1,28 @@
-import { isCabinetItem } from "./domain";
-import type { CabinetItem } from "./types";
+import { isGearItem } from "./domain";
+import type { GearItem, LoadResult } from "./types";
 
-const STORAGE_KEY = "amber-cabinet:v1";
+export const STORAGE_KEY = "borrowed-light.gear.v1";
 
-export interface LoadResult {
-  items: CabinetItem[];
-  warning?: string;
-}
-
-export interface SaveResult {
-  ok: boolean;
-  error?: string;
-}
-
-export class CabinetStorage {
-  constructor(private readonly storage: Storage, private readonly key = STORAGE_KEY) {}
-
-  load(): LoadResult {
-    let raw: string | null;
-    try {
-      raw = this.storage.getItem(this.key);
-    } catch {
-      return { items: [], warning: "This browser blocked access to saved cabinet data. Changes may not survive a refresh." };
-    }
-    if (!raw) return { items: [] };
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed)) throw new Error();
-      const seen = new Set<string>();
-      const items = parsed.filter((value): value is CabinetItem => isCabinetItem(value) && !seen.has(value.id) && !!seen.add(value.id));
-      return items.length === parsed.length ? { items } : { items, warning: `Recovered ${items.length} valid unique cabinet records; invalid data was ignored.` };
-    } catch {
-      return { items: [], warning: "Saved cabinet data was invalid. Nothing was overwritten; start fresh or restore your browser data." };
-    }
+export function loadItems(storage: Storage = localStorage): LoadResult {
+  try {
+    const raw = storage.getItem(STORAGE_KEY);
+    if (raw === null) return { items: [], warning: null };
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.every(isGearItem)) throw new Error("Invalid gear data");
+    return { items: parsed, warning: null };
+  } catch (error) {
+    const reason = error instanceof SyntaxError || (error instanceof Error && error.message === "Invalid gear data")
+      ? "Saved gear data was damaged, so the catalog opened empty. The original data has not been overwritten."
+      : "Browser storage could not be read. Changes will stay in this tab, but may not survive a refresh.";
+    return { items: [], warning: reason };
   }
+}
 
-  save(items: CabinetItem[]): SaveResult {
-    try {
-      this.storage.setItem(this.key, JSON.stringify(items));
-      return { ok: true };
-    } catch {
-      return { ok: false, error: "The cabinet could not be saved. Check browser storage permissions or available space." };
-    }
+export function saveItems(items: readonly GearItem[], storage: Storage = localStorage): string | null {
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(items));
+    return null;
+  } catch {
+    return "This change is visible now, but browser storage rejected it. Free storage or allow site data, then try again.";
   }
 }

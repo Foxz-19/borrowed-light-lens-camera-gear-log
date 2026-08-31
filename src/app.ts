@@ -1,173 +1,224 @@
 import "./styles.css";
-import { categoriesIn, isCategory, isStatus, summarize, validateNewItem } from "./domain";
-import { CabinetStorage } from "./storage";
-import type { CabinetItem, Category, StockStatus } from "./types";
-import { renderFilters, renderInventory, renderSummary, type ViewActions } from "./view";
+import { createItem, emptyDraft, filterItems, sanitizeItem, validateDraft } from "./domain";
+import { loadItems, saveItems } from "./storage";
+import { CATEGORIES, type Category, type Filters, type GearDraft, type GearItem, type LoanFilter, type ValidationResult } from "./types";
+import { appMarkup, catalogMarkup } from "./view";
 
-const byId = <T extends HTMLElement>(id: string): T => {
-  const node = document.getElementById(id);
-  if (!node) throw new Error(`Required UI element #${id} is missing.`);
-  return node as T;
-};
+const root = document.querySelector<HTMLDivElement>("#app");
+if (!root) throw new Error("Application root is missing");
+const app: HTMLDivElement = root;
 
-class CabinetApp implements ViewActions {
-  private items: CabinetItem[] = [];
-  private filter: Category | "All" = "All";
-  private pendingDeleteId: string | null = null;
-  private deleteTrigger: HTMLButtonElement | null = null;
-  private toastTimer = 0;
-  private readonly store = new CabinetStorage(localStorage);
-  private readonly form = byId<HTMLFormElement>("add-form");
-  private readonly inventory = byId("inventory");
-  private readonly summary = byId("summary");
-  private readonly filters = byId<HTMLFieldSetElement>("filters");
-  private readonly notice = byId("notice");
-  private readonly dialog = byId<HTMLDialogElement>("delete-dialog");
+let items: GearItem[] = [];
+let draft = emptyDraft();
+let filters: Filters = { category: "all", loan: "all", query: "" };
+let errors: ValidationResult["errors"] = {};
+let editingId: string | null = null;
+let pendingDeleteId: string | null = null;
+let persistentWarning: string | null = null;
+let toastTimer = 0;
 
-  start(): void {
-    const loaded = this.store.load();
-    this.items = loaded.items;
-    const urlCategory = new URLSearchParams(window.location.search).get("category");
-    this.filter = isCategory(urlCategory) && this.items.some(item => item.category === urlCategory) ? urlCategory : "All";
-    if (urlCategory && this.filter === "All") window.history.replaceState(null, "", window.location.pathname);
-    if (loaded.warning) this.showPersistentError(loaded.warning);
-    this.bindForm();
-    this.bindDialog();
-    byId("today").textContent = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date());
-    byId("loading").hidden = true;
-    this.inventory.setAttribute("aria-busy", "false");
-    window.addEventListener("popstate", () => {
-      const category = new URLSearchParams(window.location.search).get("category");
-      this.filter = isCategory(category) ? category : "All";
-      this.render();
-    });
-    this.render();
-  }
+function readDraft(form: HTMLFormElement): GearDraft {
+  const data = new FormData(form);
+  return {
+    name: String(data.get("name") ?? ""),
+    category: String(data.get("category")) as Category,
+    condition: String(data.get("condition")) as GearDraft["condition"],
+    isLent: data.get("isLent") === "on",
+    borrower: String(data.get("borrower") ?? ""),
+    note: String(data.get("note") ?? ""),
+    dateAdded: String(data.get("dateAdded") ?? ""),
+  };
+}
 
-  private bindForm(): void {
-    const note = byId<HTMLTextAreaElement>("item-note");
-    note.addEventListener("input", () => { byId("note-count").textContent = `${note.value.length} / 180`; });
-    this.form.addEventListener("submit", event => {
-      event.preventDefault();
-      this.clearFormErrors();
-      const data = new FormData(this.form);
-      const result = validateNewItem({ name: String(data.get("name") ?? ""), category: String(data.get("category") ?? ""), note: String(data.get("note") ?? ""), status: String(data.get("status") ?? "") });
-      if (!result.item) {
-        Object.entries(result.errors).forEach(([field, message]) => { byId(`${field}-error`).textContent = message; });
-        byId("form-error").textContent = "Please check the highlighted fields.";
-        this.form.querySelector<HTMLElement>(".field-error:not(:empty)")?.closest(".field")?.querySelector<HTMLInputElement>("input, select")?.focus();
-        return;
-      }
-      const next = [result.item, ...this.items];
-      if (!this.persist(next, "form-error")) return;
-      this.items = next;
-      this.filter = "All";
-      this.form.reset();
-      byId("note-count").textContent = "0 / 180";
-      this.render();
-      this.showToast(`${result.item.name} added to the cabinet.`);
-      byId<HTMLInputElement>("item-name").focus();
-    });
-  }
+function renderShell(): void {
+  app.innerHTML = appMarkup(items, draft, filters, errors, editingId);
+  app.setAttribute("aria-busy", "false");
+  renderCatalog();
+  renderWarning();
+  bindEvents();
+}
 
-  private bindDialog(): void {
-    this.dialog.addEventListener("close", () => {
-      const trigger = this.deleteTrigger;
-      if (this.dialog.returnValue === "confirm" && this.pendingDeleteId) this.deletePending();
-      this.pendingDeleteId = null;
-      (trigger?.isConnected ? trigger : byId("cabinet-title")).focus();
-      this.deleteTrigger = null;
-    });
-  }
+function renderCatalog(): void {
+  const region = document.querySelector<HTMLDivElement>("#result-region");
+  if (!region) return;
+  region.innerHTML = catalogMarkup(filterItems(items, filters), items.length);
+}
 
-  onStatus(id: string, status: StockStatus, trigger: HTMLButtonElement): void {
-    if (!isStatus(status)) return this.showPersistentError("An invalid stock status was rejected. Your cabinet was not changed.");
-    const item = this.items.find(entry => entry.id === id);
-    if (!item) return this.showPersistentError("That bottle could not be found. Refresh the cabinet and try again.");
-    if (item.status === status) return;
-    const next = this.items.map(entry => entry.id === id ? { ...entry, status } : entry);
-    if (!this.persist(next)) return;
-    this.items = next;
-    this.render();
-    this.showToast(`${item.name} marked ${status.replace("-", " ")}.`);
-    this.inventory.querySelector<HTMLButtonElement>(`[data-item-id="${CSS.escape(id)}"][data-status="${status}"]`)?.focus();
-    trigger.blur();
-  }
+function renderWarning(): void {
+  document.querySelector(".storage-warning")?.remove();
+  if (!persistentWarning) return;
+  const banner = document.createElement("div");
+  banner.className = "storage-warning";
+  banner.setAttribute("role", "alert");
+  banner.innerHTML = `<strong>Storage needs attention</strong><span></span><button aria-label="Dismiss storage warning">×</button>`;
+  const message = banner.querySelector("span");
+  if (message) message.textContent = persistentWarning;
+  banner.querySelector("button")?.addEventListener("click", function dismissWarning() {
+    persistentWarning = null;
+    banner.remove();
+  });
+  document.body.prepend(banner);
+}
 
-  onDelete(id: string, trigger: HTMLButtonElement): void {
-    if (!id || !this.items.some(item => item.id === id)) return this.showPersistentError("That bottle could not be found. Nothing was removed.");
-    const item = this.items.find(entry => entry.id === id)!;
-    this.pendingDeleteId = id;
-    this.deleteTrigger = trigger;
-    byId("delete-description").textContent = `Remove “${item.name}” and its 1 inventory record? This cannot be undone.`;
-    this.dialog.returnValue = "";
-    this.dialog.showModal();
-  }
-
-  private deletePending(): void {
-    const item = this.items.find(entry => entry.id === this.pendingDeleteId);
-    if (!item) return this.showPersistentError("The bottle was already removed. No further changes were made.");
-    const next = this.items.filter(entry => entry.id !== item.id);
-    if (!this.persist(next)) return;
-    this.items = next;
-    if (this.filter !== "All" && !isCategory(this.filter)) this.filter = "All";
-    if (this.filter !== "All" && !next.some(entry => entry.category === this.filter)) this.filter = "All";
-    this.render();
-    this.showToast(`${item.name} removed from the cabinet.`);
-  }
-
-  private persist(next: CabinetItem[], inlineId?: string): boolean {
-    const saved = this.store.save(next);
-    if (saved.ok) return true;
-    const message = saved.error ?? "The cabinet could not be saved.";
-    this.showPersistentError(message);
-    if (inlineId) byId(inlineId).textContent = message;
+function persist(successMessage: string): boolean {
+  const failure = saveItems(items);
+  if (failure) {
+    persistentWarning = failure;
+    renderWarning();
+    showInlineFailure(failure);
     return false;
   }
+  persistentWarning = null;
+  renderWarning();
+  showToast(successMessage);
+  return true;
+}
 
-  private render(): void {
-    renderSummary(this.summary, summarize(this.items));
-    renderFilters(this.filters, this.filter, categoriesIn(this.items), value => this.setFilter(value));
-    renderInventory(this.inventory, this.items, this, this.filter);
+function showInlineFailure(message: string): void {
+  const status = document.querySelector<HTMLElement>("#form-status");
+  if (status) status.textContent = message;
+}
+
+function showToast(message: string): void {
+  const toast = document.querySelector<HTMLDivElement>(".toast");
+  if (!toast) return;
+  window.clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add("is-visible");
+  toastTimer = window.setTimeout(function hideToast() { toast.classList.remove("is-visible"); }, 3200);
+}
+
+function handleSubmit(event: SubmitEvent): void {
+  event.preventDefault();
+  const form = event.currentTarget as HTMLFormElement;
+  draft = readDraft(form);
+  const result = validateDraft(draft);
+  errors = result.errors;
+  if (!result.valid) {
+    renderShell();
+    const firstInvalid = document.querySelector(".field-error:not(:empty)")?.closest("label")?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input,select,textarea");
+    firstInvalid?.focus();
+    showInlineFailure("Check the marked fields before adding this entry.");
+    return;
   }
-
-  private setFilter(value: Category | "All"): void {
-    this.filter = value;
-    const query = value === "All" ? "" : `?category=${encodeURIComponent(value)}`;
-    window.history.replaceState(null, "", `${window.location.pathname}${query}`);
-    this.render();
+  if (editingId) {
+    items = items.map((item) => item.id === editingId ? sanitizeItem({ ...draft, id: item.id }) : item);
+  } else {
+    items = [createItem(draft), ...items];
   }
+  const message = editingId ? "Field entry updated." : "Gear added to the catalog.";
+  draft = emptyDraft();
+  editingId = null;
+  errors = {};
+  renderShell();
+  persist(message);
+  document.querySelector<HTMLElement>("#catalog-title")?.focus({ preventScroll: true });
+}
 
-  private clearFormErrors(): void {
-    ["name-error", "category-error", "status-error", "form-error"].forEach(id => { const node = document.getElementById(id); if (node) node.textContent = ""; });
+function handleFormInput(event: Event): void {
+  const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+  if (target.name === "isLent" && target instanceof HTMLInputElement) {
+    const borrower = document.querySelector<HTMLElement>(".borrower-field");
+    borrower?.classList.toggle("is-visible", target.checked);
+    borrower?.querySelector("input")?.toggleAttribute("required", target.checked);
   }
-
-  private showPersistentError(message: string): void {
-    this.notice.textContent = message;
-    this.notice.hidden = false;
-    this.showToast(message, true);
+  if (target.name === "note") {
+    const count = document.querySelector<HTMLElement>("[data-note-count]");
+    if (count) count.textContent = String(target.value.length);
   }
+  const error = document.querySelector<HTMLElement>(`#${target.name}-error`);
+  if (error) error.textContent = "";
+}
 
-  private showToast(message: string, error = false): void {
-    const toast = byId("toast");
-    window.clearTimeout(this.toastTimer);
-    toast.textContent = message;
-    toast.classList.toggle("toast-error", error);
-    toast.hidden = false;
-    this.toastTimer = window.setTimeout(() => { toast.hidden = true; }, error ? 7000 : 3200);
+function beginEdit(id: string): void {
+  const item = items.find((entry) => entry.id === id);
+  if (!item) {
+    persistentWarning = "That entry is no longer available. The catalog has been refreshed.";
+    renderWarning();
+    return;
+  }
+  draft = { name: item.name, category: item.category, condition: item.condition, isLent: item.isLent, borrower: item.borrower, note: item.note, dateAdded: item.dateAdded };
+  editingId = id;
+  errors = {};
+  renderShell();
+  document.querySelector<HTMLInputElement>("[name=name]")?.focus();
+  document.querySelector(".ledger")?.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth" });
+}
+
+function openDeleteDialog(id: string, trigger: HTMLButtonElement): void {
+  const item = items.find((entry) => entry.id === id);
+  const dialog = document.querySelector<HTMLDialogElement>("#delete-dialog");
+  if (!item || !dialog) return;
+  pendingDeleteId = id;
+  dialog.dataset.returnFocus = id;
+  const copy = dialog.querySelector<HTMLElement>("[data-delete-copy]");
+  if (copy) copy.textContent = `“${item.name}” will be permanently removed. This affects exactly one catalog entry.`;
+  dialog.showModal();
+  trigger.setAttribute("data-dialog-trigger", "true");
+}
+
+function handleDialogClose(event: Event): void {
+  const dialog = event.currentTarget as HTMLDialogElement;
+  const id = pendingDeleteId;
+  pendingDeleteId = null;
+  if (dialog.returnValue === "confirm" && id) {
+    const item = items.find((entry) => entry.id === id);
+    if (item) {
+      items = items.filter((entry) => entry.id !== id);
+      if (editingId === id) { editingId = null; draft = emptyDraft(); }
+      renderShell();
+      persist(`“${item.name}” was removed.`);
+      document.querySelector<HTMLElement>("#catalog-title")?.focus({ preventScroll: true });
+    }
   }
 }
 
-try {
-  new CabinetApp().start();
-} catch (error) {
-  const app = document.getElementById("app");
-  if (app) {
-    const fallback = document.createElement("div");
-    fallback.className = "fatal-error";
-    fallback.setAttribute("role", "alert");
-    fallback.textContent = "The cabinet could not open. Refresh the page or check that browser storage is available.";
-    app.prepend(fallback);
-  }
-  console.error(error);
+function updateFilters(target: HTMLInputElement | HTMLSelectElement): void {
+  if (target.name === "query-filter") filters.query = target.value;
+  if (target.name === "category-filter" && (target.value === "all" || CATEGORIES.includes(target.value as Category))) filters.category = target.value as Filters["category"];
+  if (target.name === "loan-filter" && ["all", "available", "lent"].includes(target.value)) filters.loan = target.value as LoanFilter;
+  renderCatalog();
 }
+
+function handleAction(event: MouseEvent): void {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-action]");
+  if (!button) return;
+  const action = button.dataset.action;
+  const id = button.closest<HTMLElement>("[data-id]")?.dataset.id;
+  if (action === "edit" && id) beginEdit(id);
+  if (action === "delete" && id) openDeleteDialog(id, button);
+  if (action === "focus-form") document.querySelector<HTMLInputElement>("[name=name]")?.focus();
+  if (action === "cancel-edit") { editingId = null; draft = emptyDraft(); errors = {}; renderShell(); }
+  if (action === "clear-filters") { filters = { category: "all", loan: "all", query: "" }; renderShell(); }
+}
+
+function bindEvents(): void {
+  document.querySelector<HTMLFormElement>("#gear-form")?.addEventListener("submit", handleSubmit);
+  document.querySelector<HTMLFormElement>("#gear-form")?.addEventListener("input", handleFormInput);
+  document.querySelector<HTMLDialogElement>("#delete-dialog")?.addEventListener("close", handleDialogClose);
+}
+
+function reducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+document.addEventListener("click", handleAction);
+document.addEventListener("input", function handleFilterInput(event) {
+  const target = event.target as HTMLInputElement | HTMLSelectElement;
+  if (target.name.endsWith("-filter")) updateFilters(target);
+});
+
+function initialize(): void {
+  try {
+    const loaded = loadItems();
+    items = loaded.items;
+    persistentWarning = loaded.warning;
+    renderShell();
+  } catch {
+    app.setAttribute("aria-busy", "false");
+    app.innerHTML = `<main class="fatal" role="alert"><p class="kicker">THE LOG COULD NOT OPEN</p><h1>Something caught in the shutter.</h1><p>Your saved catalog has not been changed. Reload the page to try opening it again.</p><button class="button button--primary" type="button">Reload field log</button></main>`;
+    app.querySelector("button")?.addEventListener("click", function reloadApp() { window.location.reload(); });
+  }
+}
+
+initialize();

@@ -3,91 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#17130f" />
-    <meta name="description" content="Track every bottle, mixer, and garnish in your home bar." />
-    <title>The Amber Cabinet</title>
+    <meta name="theme-color" content="#312d27" />
+    <meta name="description" content="A warm, private field log for the camera gear you own and lend." />
+    <title>Borrowed Light — Gear Log</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <a class="skip-link" href="#cabinet">Skip to cabinet</a>
-    <main class="app-shell" id="app">
-      <header class="masthead">
-        <a class="brand" href="#cabinet" aria-label="The Amber Cabinet home">
-          <span class="brand-mark" aria-hidden="true">AC</span>
-          <span>The Amber Cabinet</span>
-        </a>
-        <p class="edition">Private collection <span aria-hidden="true">/</span> <span id="today"></span></p>
-      </header>
-
-      <div id="notice" class="notice" role="alert" hidden></div>
-
-      <div class="workspace">
-        <aside class="composer" aria-labelledby="page-title">
-          <div class="composer-inner">
-            <p class="eyebrow">Your home bar, remembered</p>
-            <h1 id="page-title">Know what’s <br /><em>on the shelf.</em></h1>
-            <p class="intro">Keep every spirit, modifier, and finishing touch in one considered cabinet.</p>
-            <a class="jump" href="#cabinet">View collection ↓</a>
-
-            <form id="add-form" novalidate>
-              <div class="field">
-                <label for="item-name">Bottle or ingredient <span aria-hidden="true">*</span></label>
-                <input id="item-name" name="name" maxlength="60" autocomplete="off" placeholder="e.g. Buffalo Trace…" aria-describedby="name-error" required />
-                <span class="field-error" id="name-error"></span>
-              </div>
-              <div class="field">
-                <label for="item-category">Category <span aria-hidden="true">*</span></label>
-                <select id="item-category" name="category" aria-describedby="category-error" required>
-                  <option value="">Choose a category</option>
-                  <option>Whiskey</option><option>Gin</option><option>Rum</option>
-                  <option>Tequila</option><option>Brandy</option><option>Liqueur</option>
-                  <option>Bitters</option><option>Mixer</option><option>Garnish</option><option>Other</option>
-                </select>
-                <span class="field-error" id="category-error"></span>
-              </div>
-              <div class="field">
-                <label for="item-note">Tasting note or brand <span>Optional</span></label>
-                <textarea id="item-note" name="note" maxlength="180" autocomplete="off" placeholder="Vanilla, charred oak, orange peel…"></textarea>
-                <span class="counter" id="note-count">0 / 180</span>
-              </div>
-              <fieldset class="status-choice">
-                <legend>Starting status</legend>
-                <label><input type="radio" name="status" value="in-stock" checked /><span>In stock</span></label>
-                <label><input type="radio" name="status" value="running-low" /><span>Running low</span></label>
-                <label><input type="radio" name="status" value="out" /><span>Out</span></label>
-              </fieldset>
-              <p id="form-error" class="form-error" role="alert"></p>
-              <button class="primary" type="submit"><span>Add to cabinet</span><span aria-hidden="true">＋</span></button>
-            </form>
-          </div>
-        </aside>
-
-        <section class="cabinet" id="cabinet" aria-labelledby="cabinet-title">
-          <header class="cabinet-head">
-            <div><p class="eyebrow">Inventory ledger</p><h2 id="cabinet-title" tabindex="-1">The collection</h2></div>
-            <dl class="summary" id="summary" aria-label="Inventory summary"></dl>
-          </header>
-          <fieldset class="filters" id="filters">
-            <legend>Filter by category</legend>
-          </fieldset>
-          <div class="shelf-rule" aria-hidden="true"><span></span></div>
-          <div id="loading" class="loading" role="status"><span></span>Opening the cabinet…</div>
-          <div id="inventory" class="inventory" aria-live="polite" aria-busy="true"></div>
-        </section>
-      </div>
-    </main>
-
-    <dialog id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description">
-      <form method="dialog">
-        <p class="eyebrow">Remove from cabinet</p>
-        <h2 id="delete-title">Let this bottle go?</h2>
-        <p id="delete-description"></p>
-        <div class="dialog-actions">
-          <button value="cancel" class="secondary">Keep it</button>
-          <button value="confirm" class="danger">Remove bottle</button>
-        </div>
-      </form>
-    </dialog>
-    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <a class="skip-link" href="#catalog">Skip to catalog</a>
+    <div id="app" aria-busy="true">
+      <main class="boot" aria-live="polite">
+        <span class="boot__aperture" aria-hidden="true"></span>
+        <p>Opening the field log…</p>
+      </main>
+    </div>
     <script type="module" src="/src/app.ts"></script>
   </body>
 </html>

@@ -1,6 +1,7 @@
 {
-  "name": "amber-cabinet",
+  "name": "borrowed-light",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -8,9 +9,9 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "happy-dom": "20.11.15",
-    "typescript": "5.9.2",
-    "vite": "8.2.2",
-    "vitest": "4.1.11"
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "3.2.7"
   }
 }
